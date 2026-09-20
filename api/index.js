@@ -508,15 +508,15 @@ app.get('/', (req, res) => {
   <title>BTC Energy API Mock Suite · 4 Protokolle</title>
   <style>
     :root {
-      --primary: #1E293B;       /* Ruhiges Schiefergrau */
-      --accent: #2563EB;        /* SAP/Professional Blau */
-      --accent-soft: #EFF6FF;   /* Zartes Blau */
-      --border-color: #E2E8F0;  /* Dezente Ränder */
-      --bg-gray: #F8FAFC;       /* Ruhiger Hintergrund */
+      --primary: #0A58CA;       /* Freundliches BTP Königsblau */
+      --accent: #0284C7;        /* Frisches Cyan/Himmelblau */
+      --accent-soft: #F0F9FF;   /* Sanftes Hellblau */
+      --border-color: #E2E8F0;  /* Sauberer dezenter Rand */
+      --bg-gray: #F1F5F9;       /* Freundliches, helles Grau */
       --card-bg: #FFFFFF;
-      --text-main: #0F172A;     /* Haupttext dunkelgrau */
+      --text-main: #1E293B;     /* Sehr gut lesbares Dunkelgrau */
       --text-muted: #64748B;    /* Sekundärtext */
-      --code-bg: #0F172A;
+      --code-bg: #0F172A;       /* Code-Box Kontrast */
       --code-text: #38BDF8;
     }
     * { box-sizing: border-box; }
@@ -532,92 +532,104 @@ app.get('/', (req, res) => {
       margin: 0 auto;
       background: var(--card-bg);
       border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 25px rgba(0,0,0,0.03);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
       border: 1px solid var(--border-color);
       overflow: hidden;
     }
     .header {
-      background: #1E293B;
+      background: linear-gradient(135deg, #0A58CA 0%, #0284C7 100%);
       color: white;
-      padding: 28px 32px;
-      border-bottom: 1px solid #334155;
+      padding: 30px 32px;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
     }
-    .header h1 { margin: 0 0 6px 0; font-size: 1.6rem; font-weight: 700; }
-    .header p { margin: 0; color: #94A3B8; font-size: 0.95rem; }
+    .header h1 { margin: 0 0 6px 0; font-size: 1.65rem; font-weight: 700; color: #FFFFFF; }
+    .header p { margin: 0; color: #E0F2FE; font-size: 0.95rem; }
     
     /* 4 Schnittstellen Kacheln oben */
     .protocol-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
-      margin-top: 20px;
+      margin-top: 22px;
     }
     .protocol-card {
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 8px;
       padding: 14px 16px;
       cursor: pointer;
+      backdrop-filter: blur(4px);
       transition: all 0.15s ease-in-out;
     }
     .protocol-card:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(255,255,255,0.25);
+      background: rgba(255, 255, 255, 0.25);
+      border-color: rgba(255, 255, 255, 0.4);
     }
     .protocol-card.selected {
-      background: white;
+      background: #FFFFFF;
       color: var(--text-main);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      border-color: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      border-color: #FFFFFF;
     }
-    .protocol-card.selected h3 { color: var(--accent); }
-    .protocol-card h3 { margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; color: white; display: flex; align-items: center; justify-content: space-between; }
+    .protocol-card.selected h3 { color: #0A58CA; }
+    .protocol-card h3 { margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; color: #FFFFFF; display: flex; align-items: center; justify-content: space-between; }
     .protocol-card .badge {
       font-size: 0.7rem;
       padding: 2px 7px;
       border-radius: 6px;
       font-weight: 600;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
     }
-    .protocol-card.selected .badge { background: #F1F5F9; color: #475569; }
-    .protocol-card p { margin: 0; font-size: 0.8rem; color: #94A3B8; line-height: 1.4; }
+    .protocol-card.selected .badge { background: #E0F2FE; color: #0369A1; }
+    .protocol-card p { margin: 0; font-size: 0.8rem; color: #F0F9FF; line-height: 1.4; }
     .protocol-card.selected p { color: #64748B; }
 
     .body-content { padding: 28px 32px; }
     
-    /* Ruhige Button-Styles */
+    /* Freundliche, einheitliche Button-Styles */
     .btn-token {
-      background: #F8FAFC;
-      color: #1E293B;
-      border: 1px solid #CBD5E1;
-      padding: 6px 13px;
+      background: #0A58CA;
+      color: #FFFFFF;
+      border: 1px solid #084298;
+      padding: 7px 14px;
       border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.83rem;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      box-shadow: 0 1px 2px rgba(10, 88, 202, 0.15);
       transition: all 0.15s ease;
     }
-    .btn-token:hover { background: #F1F5F9; border-color: #94A3B8; }
+    .btn-token:hover {
+      background: #084298;
+      border-color: #052c65;
+      color: #FFFFFF;
+    }
     .btn-token.loading { opacity: 0.6; pointer-events: none; }
 
     .btn-link {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: #F8FAFC;
-      color: #1E293B;
-      border: 1px solid #CBD5E1;
+      background: #FFFFFF;
+      color: #0A58CA;
+      border: 1px solid #BFDBFE;
       text-decoration: none;
-      padding: 6px 13px;
+      padding: 7px 14px;
       border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.83rem;
       font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
       transition: all 0.15s ease;
     }
-    .btn-link:hover { background: #F1F5F9; border-color: #94A3B8; color: #0F172A; }
+    .btn-link:hover {
+      background: #EFF6FF;
+      border-color: #93C5FD;
+      color: #084298;
+    }
 
     /* Live Interactive Token Generator Bar */
     .token-generator-box {
@@ -799,21 +811,21 @@ app.get('/', (req, res) => {
     
     .note {
       background: #F8FAFC;
-      border-left: 3px solid #64748B;
-      padding: 10px 14px;
-      border-radius: 0 6px 6px 0;
+      border-left: 4px solid #0A58CA;
+      padding: 12px 16px;
+      border-radius: 0 8px 8px 0;
       margin-bottom: 18px;
-      font-size: 0.85rem;
-      color: #334155;
-      line-height: 1.45;
+      font-size: 0.88rem;
+      color: #1E293B;
+      line-height: 1.5;
       border-top: 1px solid var(--border-color);
       border-right: 1px solid var(--border-color);
       border-bottom: 1px solid var(--border-color);
     }
     .note-purple {
-      background: #F8FAFC;
-      border-left-color: #6366F1;
-      color: #334155;
+      background: #F0F9FF;
+      border-left-color: #0284C7;
+      color: #0C4A6E;
     }
   </style>
 </head>
@@ -871,7 +883,7 @@ app.get('/', (req, res) => {
           Standardisierte REST-Schnittstelle mit OpenAPI 3.0.3 Spezifikation und interaktiver Swagger UI.
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/docs" target="_blank" class="btn-link">📖 Swagger UI öffnen</a>
-            <a href="/openapi.json" target="_blank" class="btn-link" style="background:#0F172A;">📜 OpenAPI 3.0 Spezifikation</a>
+            <a href="/openapi.json" target="_blank" class="btn-link">📜 OpenAPI 3.0 Spezifikation</a>
             <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
@@ -981,7 +993,7 @@ IntegrationCell.Include = true</code></pre>
           • <b>Metadaten ($metadata):</b> Öffentlich abrufbar, damit APIM den Auto-Proxy bauen kann.<br/>
           • <b>Geschäftsdaten (MeterReadingSet):</b> Geschützt über den <b>OAuth 2.0 Bearer Token</b>!
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link" style="background:#107E3E;">📜 $metadata XML ansehen</a>
+            <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link">📜 $metadata XML ansehen</a>
             <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
@@ -1018,11 +1030,11 @@ IntegrationCell.Include = true</code></pre>
         <!-- TAB 2: BTP Destination & Proxy Setup -->
         <div id="odata-v2-dest" class="tab-pane">
           <div class="note note-purple">
-            <b>Auto-Proxy Generierung im API Portal:</b><br/>
-            APIM liest die <code>$metadata</code> des OData v2 Services aus und erzeugt automatisch die CRUD-Ressourcen für die EntitySet <code>MeterReadingSet</code>.
+            <b>BTP Destination & OData Auto-Proxy Setup:</b><br/>
+            Die Destination <code>BTC_UTILITY_MOCK_API</code> wird sowohl vom klassischen API Management als auch von der Integration Cell für den Auto-Proxy-Import genutzt.
           </div>
           <div class="code-box">
-            <div class="code-box-header"><span>BTP Destination: BTC_UTILITY_MOCK_API</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <div class="code-box-header"><span>BTP Destination: BTC_UTILITY_MOCK_API (OAuth2ClientCredentials)</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code>Name = BTC_UTILITY_MOCK_API
 Type = HTTP
 URL = ${hostUrl}
@@ -1033,12 +1045,12 @@ clientId = btc-demo-client
 clientSecret = btc-demo-secret-2026
 IntegrationCell.Include = true</code></pre>
           </div>
-          <h4>Vorgehen im API Portal:</h4>
+          <h4>OData Auto-Proxy Schritte im SAP API Portal:</h4>
           <ol style="line-height:1.7; font-size:0.92rem;">
-            <li>Wähle <b>Create API Proxy</b>.</li>
-            <li>Source: Wähle <b>URL</b>.</li>
-            <li>URL: <code>${hostUrl}/odata/v2/utility/</code></li>
-            <li>APIM parst die EDMX Metadaten und baut den OData v2 Proxy vollautomatisch auf.</li>
+            <li><b>Neuen Proxy anlegen:</b> Wähle <i>Create API Proxy</i>.</li>
+            <li><b>Source:</b> Wähle <i>API Definition</i> &rarr; <i>EDMX</i>.</li>
+            <li><b>URL angeben:</b> Trage <code>${hostUrl}/odata/v2/utility/$metadata</code> ein. APIM liest die EntitySets (<code>MeterReadingSet</code>) automatisch ein!</li>
+            <li><b>Target Endpoint:</b> Verknüpfe den Proxy mit der BTP Destination <code>BTC_UTILITY_MOCK_API</code>.</li>
           </ol>
         </div>
 
@@ -1057,11 +1069,11 @@ IntegrationCell.Include = true</code></pre>
               </div>
             </div>
             <div class="apim-hint">
-              💡 Der Aufruf erfolgt gegen deinen SAP APIM Proxy mit dem Developer Key im Header <code>apikey</code>.
+              💡 <b>Didaktischer Merksatz:</b> Der Konsument ruft ausschließlich den APIM Proxy auf und authentifiziert sich per <code>apikey</code> (Developer Key).
             </div>
           </div>
 
-          <h3>1. Alle Zählerstände über APIM abrufen</h3>
+          <h3>1. OData v2 über APIM abrufen (Alle Datensätze)</h3>
           <div class="code-box">
             <div class="code-box-header"><span>GET /odata/v2/utility/MeterReadingSet über APIM</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="apimCurlODataV2All">curl -L -X GET "https://&lt;DEIN_APIM_HOST&gt;/odata/v2/utility/MeterReadingSet" \\
@@ -1069,7 +1081,7 @@ IntegrationCell.Include = true</code></pre>
      -H "apikey: DEIN_DEVELOPER_KEY"</code></pre>
           </div>
 
-          <h3>2. Gefilterte Abfrage ($filter) über APIM</h3>
+          <h3>2. OData v2 Filter über APIM abrufen ($filter)</h3>
           <div class="code-box">
             <div class="code-box-header"><span>GET mit $filter über APIM</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="apimCurlODataV2Filter">curl -L -X GET "https://&lt;DEIN_APIM_HOST&gt;/odata/v2/utility/MeterReadingSet?%24filter=MeterId%20eq%20%27DE-OL-MTR-001%27" \\
@@ -1081,11 +1093,11 @@ IntegrationCell.Include = true</code></pre>
         <!-- TAB 4: Policy XML -->
         <div id="odata-v2-policy" class="tab-pane">
           <div class="note">
-            <b>VerifyAPIKey Policy für OData v2 Proxies</b><br/>
-            Erzwingt einen gültigen Developer Key vor Weiterleitung an den SAP IS-U OData v2 Service.
+            <b>Policy: OData Schema Validation & DevKey</b><br/>
+            Schützt die OData-Schnittstelle vor bösartigen Abfragen und erzwingt den Developer Hub Key.
           </div>
           <div class="code-box">
-            <div class="code-box-header"><span>Policy: VerifyAPIKey_ODataV2.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_DevHub.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
     &lt;APIKey ref="request.header.apikey"/&gt;
 &lt;/VerifyAPIKey&gt;</code></pre>
@@ -1101,7 +1113,7 @@ IntegrationCell.Include = true</code></pre>
           <b>Schnittstelle 3: SAP OData v4 Service (Modern RAP / CAP)</b><br/>
           Geschützt über <b>OAuth 2.0 Bearer Token</b>. Liefert flache JSON-Objekte nach OASIS-Standard.
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link" style="background:#6366F1;">📜 OData v4 $metadata XML</a>
+            <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link">📜 OData v4 $metadata XML</a>
             <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
@@ -1194,7 +1206,7 @@ IntegrationCell.Include = true</code></pre>
           <b>Schnittstelle 4: Legacy SOAP 1.1 Service</b><br/>
           Klassischer XML Web Service mit WSDL. Erfordert im direkten Aufruf den <b>OAuth 2.0 Bearer Token</b> im HTTP-Header.
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <a href="/soap/utility?wsdl" target="_blank" class="btn-link" style="background:#E9730C;">📜 WSDL herunterladen / ansehen</a>
+            <a href="/soap/utility?wsdl" target="_blank" class="btn-link">📜 WSDL herunterladen / ansehen</a>
             <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
