@@ -2,6 +2,10 @@
   "version": 2,
   "rewrites": [
     {
+      "source": "/odata/:version/utility/\\$metadata",
+      "destination": "/api/index.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/api/index.js"
     }

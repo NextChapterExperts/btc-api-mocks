@@ -3,9 +3,12 @@ module.exports = function setupOData(app, getBaseUrl, meterDatabase) {
 
   // 1. OData v2 $metadata XML
   app.use((req, res, next) => {
-    if (req.path === '/odata/v2/utility/$metadata' || req.path === '/odata/v2/utility/%24metadata') {
-      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-      return res.send(`<?xml version="1.0" encoding="utf-8"?>
+    const p = req.path || req.url || '';
+    const orig = req.originalUrl || '';
+    if (p.includes('$metadata') || p.includes('%24metadata') || orig.includes('$metadata') || orig.includes('%24metadata')) {
+      if (p.includes('/v2/') || orig.includes('/v2/')) {
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        return res.send(`<?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
   <edmx:DataServices m:DataServiceVersion="2.0">
     <Schema Namespace="BTC_UTILITY_ISU_SRV" xml:lang="de" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
@@ -25,12 +28,10 @@ module.exports = function setupOData(app, getBaseUrl, meterDatabase) {
     </Schema>
   </edmx:DataServices>
 </edmx:Edmx>`);
-    }
-
-    // 2. OData v4 $metadata XML
-    if (req.path === '/odata/v4/utility/$metadata' || req.path === '/odata/v4/utility/%24metadata') {
-      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-      return res.send(`<?xml version="1.0" encoding="utf-8"?>
+      }
+      if (p.includes('/v4/') || orig.includes('/v4/')) {
+        res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+        return res.send(`<?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
   <edmx:DataServices>
     <Schema Namespace="com.sap.btc.utility" xmlns="http://docs.oasis-open.org/odata/ns/edm">
@@ -50,8 +51,8 @@ module.exports = function setupOData(app, getBaseUrl, meterDatabase) {
     </Schema>
   </edmx:DataServices>
 </edmx:Edmx>`);
+      }
     }
-
     next();
   });
 };
