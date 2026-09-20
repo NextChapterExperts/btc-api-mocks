@@ -646,27 +646,62 @@ app.get('/', (req, res) => {
       color: #166534;
     }
 
-    /* Developer Key Input */
-    .devkey-container {
+    /* Interaktives APIM Live Test Cockpit (Grün) */
+    .apim-cockpit-box {
       background: #F0FDF4;
       border: 2px solid #86EFAC;
-      border-radius: 8px;
-      padding: 14px 20px;
+      border-radius: 10px;
+      padding: 16px 20px;
       margin-bottom: 24px;
+    }
+    .apim-cockpit-box h4 {
+      margin: 0 0 12px 0;
+      color: #166534;
+      font-size: 0.95rem;
       display: flex;
       align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
+      gap: 8px;
     }
-    .devkey-container label { font-size: 0.85rem; font-weight: bold; color: #166534; }
-    .devkey-container input {
-      flex: 1;
-      min-width: 250px;
+    .apim-cockpit-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 768px) {
+      .apim-cockpit-grid { grid-template-columns: 1fr; }
+    }
+    .apim-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #166534;
+      margin-bottom: 6px;
+    }
+    .apim-field input {
+      width: 100%;
       padding: 8px 12px;
       border: 1px solid #86EFAC;
       border-radius: 6px;
       font-family: monospace;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      background: white;
+      color: #14532D;
+    }
+    .apim-field input:focus {
+      outline: none;
+      border-color: #16A34A;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+    }
+    .apim-hint {
+      font-size: 0.8rem;
+      color: #15803D;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+    .note-purple {
+      background: #F5F3FF;
+      border-left-color: #8B5CF6;
+      color: #4C1D95;
     }
 
     /* Tabs Header */
@@ -808,33 +843,33 @@ app.get('/', (req, res) => {
         </div>
       </div>
 
-      <!-- PERSONALISIERTER DEVELOPER KEY -->
-      <div class="devkey-container">
-        <label for="devKeyInput">🔑 Dein Developer Key (aus dem SAP Developer Hub):</label>
-        <input type="text" id="devKeyInput" placeholder="Hier deinen Developer Key einfügen..." oninput="updateDevKey(this.value)" />
-      </div>
-
       <!-- ======================================================== -->
       <!-- BEREICH 1: REST & OAUTH 2.0 -->
       <!-- ======================================================== -->
       <div id="section-rest" class="protocol-section">
         <div class="note">
-          <b>Schnittstelle 1: REST mit OpenAPI 3.0.3</b><br/>
-          Inklusive interaktiver Swagger UI und echtem Token-Refresh.
-          <div style="margin-top: 8px;">
+          <b>Schnittstelle 1: REST API (Smart Meter Ingestion)</b><br/>
+          Standardisierte REST-Schnittstelle mit OpenAPI 3.0.3 Spezifikation und interaktiver Swagger UI.
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/docs" target="_blank" class="btn-link">📖 Swagger UI öffnen</a>
             <a href="/openapi.json" target="_blank" class="btn-link" style="background:#0F172A;">📜 OpenAPI 3.0 Spezifikation</a>
+            <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('rest', 'curl')">💻 cURL Befehle</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'destination')">☁️ BTP Destination</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'policy')">🛡️ Ingress Developer Key Policy</button>
+          <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'dest')">⚙️ 2. BTP Destination & Setup</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'policy')">📜 4. APIM Policies (XML)</button>
         </div>
 
-        <div id="rest-curl" class="tab-pane active">
-          <h3>1. Token abholen per Terminal (OAuth2 Client Credentials)</h3>
+        <!-- TAB 1: Direkt Test -->
+        <div id="rest-direct" class="tab-pane active">
+          <p style="font-size:0.9rem; color:#475569;">
+            <b>Vor der APIM-Implementierung:</b> Direkter Aufruf gegen das Mock-Backend. Hierfür wird der <b>OAuth 2.0 Bearer Token</b> benötigt (kein Developer Key).
+          </p>
+          <h3>1. Token abholen per Terminal (Client Credentials)</h3>
           <div class="code-box">
             <div class="code-box-header"><span>POST ${hostUrl}/oauth/token</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code>curl -L -X POST "${hostUrl}/oauth/token" \\
@@ -848,21 +883,19 @@ app.get('/', (req, res) => {
             <pre><code id="curlRestReading">curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
      -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
           </div>
-
-          <h3>3. Integration Cell Aufruf mit Developer Key</h3>
-          <div class="code-box">
-            <div class="code-box-header"><span>GET Cell Ingress</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code class="cell-curl">curl -L -X GET "https://&lt;DEINE_INTEGRATION_CELL_RUNTIME_URL&gt;/api/v1/smartmeters" \\
-     -H "apikey: DEIN_DEVELOPER_KEY"</code></pre>
-          </div>
         </div>
 
-        <div id="rest-destination" class="tab-pane">
+        <!-- TAB 2: BTP Destination -->
+        <div id="rest-dest" class="tab-pane">
+          <div class="note note-purple">
+            <b>Zentrale BTP Destination für SAP Integration Suite / Integration Cell:</b><br/>
+            Lege diese Destination im BTP Subaccount an. Sie dient als SSoT für alle Proxies und API-Artefakte.
+          </div>
           <div class="code-box">
-            <div class="code-box-header"><span>BTP Destination Properties</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code>Name = BTC_SMARTMETER_REST_OAUTH
+            <div class="code-box-header"><span>BTP Destination: BTC_UTILITY_MOCK_API (OAuth2ClientCredentials)</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>Name = BTC_UTILITY_MOCK_API
 Type = HTTP
-URL = ${hostUrl}/api/v1/
+URL = ${hostUrl}
 ProxyType = Internet
 Authentication = OAuth2ClientCredentials
 tokenServiceURL = ${hostUrl}/oauth/token
@@ -870,17 +903,52 @@ clientId = btc-demo-client
 clientSecret = btc-demo-secret-2026
 IntegrationCell.Include = true</code></pre>
           </div>
+          <h4>Schritte im SAP API Portal:</h4>
+          <ol style="line-height:1.7; font-size:0.92rem;">
+            <li><b>API Proxy anlegen:</b> Wähle <i>Create API Proxy</i>.</li>
+            <li><b>Source:</b> Wähle <i>OpenAPI</i> oder <i>URL</i> mit <code>${hostUrl}/api/v1/</code></li>
+            <li><b>API-Artefakt (Integration Cell):</b> Referenziere Destination <code>BTC_UTILITY_MOCK_API</code> mit relativem Pfad <code>/api/v1/smartmeters</code>.</li>
+          </ol>
         </div>
 
-        <div id="rest-policy" class="tab-pane">
+        <!-- TAB 3: APIM Proxy Test -->
+        <div id="rest-apim" class="tab-pane">
+          <div class="apim-cockpit-box">
+            <h4>🛡️ APIM Proxy Test-Konfiguration</h4>
+            <div class="apim-cockpit-grid">
+              <div class="apim-field">
+                <label for="apimHost_rest">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
+                <input type="text" id="apimHost_rest" value="https://&lt;DEIN_APIM_HOST&gt;" oninput="syncApimInputs(this.value, null)" />
+              </div>
+              <div class="apim-field">
+                <label for="apimKey_rest">🔑 Dein Developer Key (aus dem Hub):</label>
+                <input type="text" id="apimKey_rest" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
+              </div>
+            </div>
+            <div class="apim-hint">
+              💡 <b>Didaktischer Merksatz:</b> Der Konsument ruft ausschließlich den APIM Proxy auf und authentifiziert sich per <code>apikey</code> (Developer Key). Das Backend sieht diesen Key nie – APIM tauscht ihn automatisch gegen den Backend-OAuth2-Token aus!
+            </div>
+          </div>
+
+          <h3>Aufruf über den fertig implementierten APIM Proxy</h3>
           <div class="code-box">
-            <div class="code-box-header"><span>Policy: Authorization_ValidateDevHub.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code>&lt;Authorization async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
-    &lt;VerificationPolicy&gt;
-        &lt;Type&gt;APIKey&lt;/Type&gt;
-        &lt;Source&gt;request.header.apikey&lt;/Source&gt;
-    &lt;/VerificationPolicy&gt;
-&lt;/Authorization&gt;</code></pre>
+            <div class="code-box-header"><span>GET über APIM Runtime</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="apimCurlRest">curl -L -X GET "https://&lt;DEIN_APIM_HOST&gt;/api/v1/smartmeters" \\
+     -H "apikey: DEIN_DEVELOPER_KEY"</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 4: Policy XML -->
+        <div id="rest-policy" class="tab-pane">
+          <div class="note">
+            <b>Policy: Ingress Developer Key Validierung</b><br/>
+            Füge diese Policy im <i>ProxyEndpoint PreFlow</i> ein, um den Developer Key aus dem Developer Hub zu erzwingen.
+          </div>
+          <div class="code-box">
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_DevHub.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
+    &lt;APIKey ref="request.header.apikey"/&gt;
+&lt;/VerifyAPIKey&gt;</code></pre>
           </div>
         </div>
       </div>
@@ -895,27 +963,23 @@ IntegrationCell.Include = true</code></pre>
           • <b>Geschäftsdaten (MeterReadingSet):</b> Geschützt über den <b>OAuth 2.0 Bearer Token</b>!
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link" style="background:#107E3E;">📜 $metadata XML ansehen</a>
-            <button class="btn-token" style="padding: 6px 14px; font-size: 0.85rem;" onclick="fetchLiveToken()">⚡ OData OAuth 2 Bearer Token holen</button>
+            <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'proxy')">🚀 Proxy-Erstellung im APIM</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'curl')">💻 cURL Aufrufe (mit Bearer Token)</button>
+          <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'dest')">⚙️ 2. BTP Destination & Setup</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'policy')">📜 4. APIM Policies (XML)</button>
         </div>
 
-        <div id="odata-v2-proxy" class="tab-pane active">
-          <h3>Im SAP API Portal / Integration Suite:</h3>
-          <ol style="line-height:1.7; font-size:0.95rem;">
-            <li>Wähle <b>Create API Proxy</b>.</li>
-            <li>Source: Wähle <b>URL</b>.</li>
-            <li>URL: Trage ein: <code>${hostUrl}/odata/v2/utility/</code></li>
-            <li>Klicke auf <b>Next</b> ➔ APIM liest automatisch die <code>$metadata</code> und generiert die Entität <b>MeterReadingSet</b> mit allen CRUD-Operationen!</li>
-          </ol>
-        </div>
-
-        <div id="odata-v2-curl" class="tab-pane">
-          <h3>1. Alle Zählerstände abrufen (mit echtem Bearer Token)</h3>
+        <!-- TAB 1: Direkt Test -->
+        <div id="odata-v2-direct" class="tab-pane active">
+          <p style="font-size:0.9rem; color:#475569;">
+            <b>Direkter Backend-Test:</b> Abfrage direkt gegen Vercel mit OAuth 2.0 Bearer Token.
+          </p>
+          <h3>1. Alle Zählerstände abrufen</h3>
           <div class="code-box">
             <div class="code-box-header"><span>GET /odata/v2/utility/MeterReadingSet</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="curlODataV2All">curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet" \\
@@ -931,6 +995,83 @@ IntegrationCell.Include = true</code></pre>
      -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
           </div>
         </div>
+
+        <!-- TAB 2: BTP Destination & Proxy Setup -->
+        <div id="odata-v2-dest" class="tab-pane">
+          <div class="note note-purple">
+            <b>Auto-Proxy Generierung im API Portal:</b><br/>
+            APIM liest die <code>$metadata</code> des OData v2 Services aus und erzeugt automatisch die CRUD-Ressourcen für die EntitySet <code>MeterReadingSet</code>.
+          </div>
+          <div class="code-box">
+            <div class="code-box-header"><span>BTP Destination: BTC_UTILITY_MOCK_API</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>Name = BTC_UTILITY_MOCK_API
+Type = HTTP
+URL = ${hostUrl}
+ProxyType = Internet
+Authentication = OAuth2ClientCredentials
+tokenServiceURL = ${hostUrl}/oauth/token
+clientId = btc-demo-client
+clientSecret = btc-demo-secret-2026
+IntegrationCell.Include = true</code></pre>
+          </div>
+          <h4>Vorgehen im API Portal:</h4>
+          <ol style="line-height:1.7; font-size:0.92rem;">
+            <li>Wähle <b>Create API Proxy</b>.</li>
+            <li>Source: Wähle <b>URL</b>.</li>
+            <li>URL: <code>${hostUrl}/odata/v2/utility/</code></li>
+            <li>APIM parst die EDMX Metadaten und baut den OData v2 Proxy vollautomatisch auf.</li>
+          </ol>
+        </div>
+
+        <!-- TAB 3: APIM Proxy Test -->
+        <div id="odata-v2-apim" class="tab-pane">
+          <div class="apim-cockpit-box">
+            <h4>🛡️ APIM Proxy Test-Konfiguration</h4>
+            <div class="apim-cockpit-grid">
+              <div class="apim-field">
+                <label for="apimHost_odata-v2">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
+                <input type="text" id="apimHost_odata-v2" value="https://&lt;DEIN_APIM_HOST&gt;" oninput="syncApimInputs(this.value, null)" />
+              </div>
+              <div class="apim-field">
+                <label for="apimKey_odata-v2">🔑 Dein Developer Key (aus dem Hub):</label>
+                <input type="text" id="apimKey_odata-v2" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
+              </div>
+            </div>
+            <div class="apim-hint">
+              💡 Der Aufruf erfolgt gegen deinen SAP APIM Proxy mit dem Developer Key im Header <code>apikey</code>.
+            </div>
+          </div>
+
+          <h3>1. Alle Zählerstände über APIM abrufen</h3>
+          <div class="code-box">
+            <div class="code-box-header"><span>GET /odata/v2/utility/MeterReadingSet über APIM</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="apimCurlODataV2All">curl -L -X GET "https://&lt;DEIN_APIM_HOST&gt;/odata/v2/utility/MeterReadingSet" \\
+     -H "Accept: application/json" \\
+     -H "apikey: DEIN_DEVELOPER_KEY"</code></pre>
+          </div>
+
+          <h3>2. Gefilterte Abfrage ($filter) über APIM</h3>
+          <div class="code-box">
+            <div class="code-box-header"><span>GET mit $filter über APIM</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="apimCurlODataV2Filter">curl -L -X GET "https://&lt;DEIN_APIM_HOST&gt;/odata/v2/utility/MeterReadingSet?%24filter=MeterId%20eq%20%27DE-OL-MTR-001%27" \\
+     -H "Accept: application/json" \\
+     -H "apikey: DEIN_DEVELOPER_KEY"</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 4: Policy XML -->
+        <div id="odata-v2-policy" class="tab-pane">
+          <div class="note">
+            <b>VerifyAPIKey Policy für OData v2 Proxies</b><br/>
+            Erzwingt einen gültigen Developer Key vor Weiterleitung an den SAP IS-U OData v2 Service.
+          </div>
+          <div class="code-box">
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_ODataV2.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
+    &lt;APIKey ref="request.header.apikey"/&gt;
+&lt;/VerifyAPIKey&gt;</code></pre>
+          </div>
+        </div>
       </div>
 
       <!-- ======================================================== -->
@@ -942,16 +1083,87 @@ IntegrationCell.Include = true</code></pre>
           Geschützt über <b>OAuth 2.0 Bearer Token</b>. Liefert flache JSON-Objekte nach OASIS-Standard.
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link" style="background:#6366F1;">📜 OData v4 $metadata XML</a>
-            <button class="btn-token" style="padding: 6px 14px; font-size: 0.85rem;" onclick="fetchLiveToken()">⚡ OData OAuth 2 Bearer Token holen</button>
+            <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
 
-        <h3>Zählerstände im OData v4 Format abrufen (mit Bearer Token)</h3>
-        <div class="code-box">
-          <div class="code-box-header"><span>GET /odata/v4/utility/MeterReadings</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-          <pre><code id="curlODataV4All">curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\
+        <div class="tabs-header">
+          <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'dest')">⚙️ 2. BTP Destination & Setup</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'policy')">📜 4. APIM Policies (XML)</button>
+        </div>
+
+        <!-- TAB 1: Direkt Test -->
+        <div id="odata-v4-direct" class="tab-pane active">
+          <p style="font-size:0.9rem; color:#475569;">
+            <b>Direkter Backend-Test:</b> OASIS OData v4 Format mit Bearer Token.
+          </p>
+          <h3>Zählerstände im OData v4 Format abrufen</h3>
+          <div class="code-box">
+            <div class="code-box-header"><span>GET /odata/v4/utility/MeterReadings</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="curlODataV4All">curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\
      -H "Accept: application/json" \\
      -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 2: Destination & Setup -->
+        <div id="odata-v4-dest" class="tab-pane">
+          <div class="note note-purple">
+            <b>BTP Destination & OData v4 Proxy Setup:</b><br/>
+            Verwendet die identische Destination <code>BTC_UTILITY_MOCK_API</code>.
+          </div>
+          <div class="code-box">
+            <div class="code-box-header"><span>BTP Destination: BTC_UTILITY_MOCK_API</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>Name = BTC_UTILITY_MOCK_API
+Type = HTTP
+URL = ${hostUrl}
+ProxyType = Internet
+Authentication = OAuth2ClientCredentials
+tokenServiceURL = ${hostUrl}/oauth/token
+clientId = btc-demo-client
+clientSecret = btc-demo-secret-2026
+IntegrationCell.Include = true</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 3: APIM Proxy Test -->
+        <div id="odata-v4-apim" class="tab-pane">
+          <div class="apim-cockpit-box">
+            <h4>🛡️ APIM Proxy Test-Konfiguration</h4>
+            <div class="apim-cockpit-grid">
+              <div class="apim-field">
+                <label for="apimHost_odata-v4">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
+                <input type="text" id="apimHost_odata-v4" value="https://&lt;DEIN_APIM_HOST&gt;" oninput="syncApimInputs(this.value, null)" />
+              </div>
+              <div class="apim-field">
+                <label for="apimKey_odata-v4">🔑 Dein Developer Key (aus dem Hub):</label>
+                <input type="text" id="apimKey_odata-v4" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
+              </div>
+            </div>
+            <div class="apim-hint">
+              💡 OData v4 Abfrage über APIM mit Header <code>apikey</code>.
+            </div>
+          </div>
+
+          <h3>OData v4 über APIM abrufen</h3>
+          <div class="code-box">
+            <div class="code-box-header"><span>GET /odata/v4/utility/MeterReadings über APIM</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="apimCurlODataV4All">curl -L -X GET "https://&lt;DEIN_APIM_HOST&gt;/odata/v4/utility/MeterReadings" \\
+     -H "Accept: application/json" \\
+     -H "apikey: DEIN_DEVELOPER_KEY"</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 4: Policy XML -->
+        <div id="odata-v4-policy" class="tab-pane">
+          <div class="code-box">
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_ODataV4.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
+    &lt;APIKey ref="request.header.apikey"/&gt;
+&lt;/VerifyAPIKey&gt;</code></pre>
+          </div>
         </div>
       </div>
 
@@ -961,17 +1173,29 @@ IntegrationCell.Include = true</code></pre>
       <div id="section-soap" class="protocol-section" style="display:none;">
         <div class="note">
           <b>Schnittstelle 4: Legacy SOAP 1.1 Service</b><br/>
-          Klassischer XML Web Service mit WSDL. Erfordert ebenfalls den <b>OAuth 2.0 Bearer Token</b> im HTTP-Header!
+          Klassischer XML Web Service mit WSDL. Erfordert im direkten Aufruf den <b>OAuth 2.0 Bearer Token</b> im HTTP-Header.
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/soap/utility?wsdl" target="_blank" class="btn-link" style="background:#E9730C;">📜 WSDL herunterladen / ansehen</a>
-            <button class="btn-token" style="padding: 6px 14px; font-size: 0.85rem;" onclick="fetchLiveToken()">⚡ SOAP OAuth 2 Bearer Token holen</button>
+            <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
           </div>
         </div>
 
-        <h3>SOAP Request mit XML-Payload & Bearer Token</h3>
-        <div class="code-box">
-          <div class="code-box-header"><span>POST ${hostUrl}/soap/utility</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-          <pre><code id="curlSoap">curl -L -X POST "${hostUrl}/soap/utility" \\
+        <div class="tabs-header">
+          <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'dest')">⚙️ 2. BTP Destination & Setup</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'policy')">📜 4. APIM Policies (XML)</button>
+        </div>
+
+        <!-- TAB 1: Direkt Test -->
+        <div id="soap-direct" class="tab-pane active">
+          <p style="font-size:0.9rem; color:#475569;">
+            <b>Direkter Backend-Test:</b> SOAP 1.1 Envelope mit Bearer Token.
+          </p>
+          <h3>SOAP Request mit XML-Payload & Bearer Token</h3>
+          <div class="code-box">
+            <div class="code-box-header"><span>POST ${hostUrl}/soap/utility</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="curlSoap">curl -L -X POST "${hostUrl}/soap/utility" \\
      -H "Content-Type: text/xml; charset=utf-8" \\
      -H "SOAPAction: http://btc.de/energy/metering/soap/GetMeterReading" \\
      -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;" \\
@@ -983,6 +1207,80 @@ IntegrationCell.Include = true</code></pre>
       &lt;/btc:GetMeterReadingRequest&gt;
    &lt;/soapenv:Body&gt;
 &lt;/soapenv:Envelope&gt;'</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 2: Destination & Setup -->
+        <div id="soap-dest" class="tab-pane">
+          <div class="note note-purple">
+            <b>SOAP-to-REST oder Pass-Through im APIM:</b><br/>
+            SOAP-Proxies können als Passthrough oder via XSLT / XML-to-JSON Policies im APIM transformiert werden.
+          </div>
+          <div class="code-box">
+            <div class="code-box-header"><span>BTP Destination: BTC_UTILITY_MOCK_API</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>Name = BTC_UTILITY_MOCK_API
+Type = HTTP
+URL = ${hostUrl}
+ProxyType = Internet
+Authentication = OAuth2ClientCredentials
+tokenServiceURL = ${hostUrl}/oauth/token
+clientId = btc-demo-client
+clientSecret = btc-demo-secret-2026
+IntegrationCell.Include = true</code></pre>
+          </div>
+          <h4>Vorgehen für SOAP im API Portal:</h4>
+          <ol style="line-height:1.7; font-size:0.92rem;">
+            <li>Wähle <b>Create API Proxy</b>.</li>
+            <li>Source: Wähle <b>WSDL</b> und gib ein: <code>${hostUrl}/soap/utility?wsdl</code></li>
+            <li>Port & Operation: Wähle <code>MeterServiceSoapPort</code> ➔ generiert die Route für <code>GetMeterReading</code>.</li>
+          </ol>
+        </div>
+
+        <!-- TAB 3: APIM Proxy Test -->
+        <div id="soap-apim" class="tab-pane">
+          <div class="apim-cockpit-box">
+            <h4>🛡️ APIM Proxy Test-Konfiguration</h4>
+            <div class="apim-cockpit-grid">
+              <div class="apim-field">
+                <label for="apimHost_soap">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
+                <input type="text" id="apimHost_soap" value="https://&lt;DEIN_APIM_HOST&gt;" oninput="syncApimInputs(this.value, null)" />
+              </div>
+              <div class="apim-field">
+                <label for="apimKey_soap">🔑 Dein Developer Key (aus dem Hub):</label>
+                <input type="text" id="apimKey_soap" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
+              </div>
+            </div>
+            <div class="apim-hint">
+              💡 Der Konsument schickt den Developer Key im Header <code>apikey</code> an den APIM SOAP-Proxy.
+            </div>
+          </div>
+
+          <h3>SOAP Call über APIM mit Developer Key</h3>
+          <div class="code-box">
+            <div class="code-box-header"><span>POST über APIM Runtime</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="apimCurlSoap">curl -L -X POST "https://&lt;DEIN_APIM_HOST&gt;/soap/utility" \\
+     -H "Content-Type: text/xml; charset=utf-8" \\
+     -H "SOAPAction: http://btc.de/energy/metering/soap/GetMeterReading" \\
+     -H "apikey: DEIN_DEVELOPER_KEY" \\
+     -d '&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap"&gt;
+   &lt;soapenv:Header/&gt;
+   &lt;soapenv:Body&gt;
+      &lt;btc:GetMeterReadingRequest&gt;
+         &lt;btc:MeterId&gt;DE-OL-MTR-002&lt;/btc:MeterId&gt;
+      &lt;/btc:GetMeterReadingRequest&gt;
+   &lt;/soapenv:Body&gt;
+&lt;/soapenv:Envelope&gt;'</code></pre>
+          </div>
+        </div>
+
+        <!-- TAB 4: Policy XML -->
+        <div id="soap-policy" class="tab-pane">
+          <div class="code-box">
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_SOAP.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
+    &lt;APIKey ref="request.header.apikey"/&gt;
+&lt;/VerifyAPIKey&gt;</code></pre>
+          </div>
         </div>
       </div>
 
@@ -1101,11 +1399,64 @@ IntegrationCell.Include = true</code></pre>
       });
     }
 
-    function updateDevKey(val) {
-      const key = val.trim() || 'DEIN_DEVELOPER_KEY';
-      document.querySelectorAll('.cell-curl').forEach(el => {
-        el.innerText = 'curl -L -X GET "https://<DEINE_INTEGRATION_CELL_RUNTIME_URL>/api/v1/smartmeters" \\\\\\n     -H "apikey: ' + key + '"';
-      });
+    let globalApimHost = "https://<DEIN_APIM_HOST>";
+    let globalApimKey = "DEIN_DEVELOPER_KEY";
+
+    function syncApimInputs(hostVal, keyVal) {
+      if (hostVal !== null && hostVal !== undefined) {
+        globalApimHost = hostVal.trim() || 'https://<DEIN_APIM_HOST>';
+        if (globalApimHost.endsWith('/')) {
+          globalApimHost = globalApimHost.slice(0, -1);
+        }
+        ['rest', 'odata-v2', 'odata-v4', 'soap'].forEach(p => {
+          const inp = document.getElementById('apimHost_' + p);
+          if (inp && inp !== document.activeElement) inp.value = globalApimHost;
+        });
+      }
+
+      if (keyVal !== null && keyVal !== undefined) {
+        globalApimKey = keyVal.trim() || 'DEIN_DEVELOPER_KEY';
+        ['rest', 'odata-v2', 'odata-v4', 'soap'].forEach(p => {
+          const inp = document.getElementById('apimKey_' + p);
+          if (inp && inp !== document.activeElement) inp.value = globalApimKey;
+        });
+      }
+
+      updateApimCurlSnippets();
+    }
+
+    function updateApimCurlSnippets() {
+      // 1. REST
+      const rest = document.getElementById('apimCurlRest');
+      if (rest) {
+        rest.innerText = 'curl -L -X GET "' + globalApimHost + '/api/v1/smartmeters" \\\n     -H "apikey: ' + globalApimKey + '"';
+      }
+
+      // 2. OData v2 All
+      const odataV2All = document.getElementById('apimCurlODataV2All');
+      if (odataV2All) {
+        odataV2All.innerText = 'curl -L -X GET "' + globalApimHost + '/odata/v2/utility/MeterReadingSet" \\\n     -H "Accept: application/json" \\\n     -H "apikey: ' + globalApimKey + '"';
+      }
+
+      // 3. OData v2 Filter
+      const odataV2Filter = document.getElementById('apimCurlODataV2Filter');
+      if (odataV2Filter) {
+        odataV2Filter.innerText = 'curl -L -X GET "' + globalApimHost + '/odata/v2/utility/MeterReadingSet?%24filter=MeterId%20eq%20%27DE-OL-MTR-001%27" \\\n     -H "Accept: application/json" \\\n     -H "apikey: ' + globalApimKey + '"';
+      }
+
+      // 4. OData v4 All
+      const odataV4All = document.getElementById('apimCurlODataV4All');
+      if (odataV4All) {
+        odataV4All.innerText = 'curl -L -X GET "' + globalApimHost + '/odata/v4/utility/MeterReadings" \\\n     -H "Accept: application/json" \\\n     -H "apikey: ' + globalApimKey + '"';
+      }
+
+      // 5. SOAP
+      const soap = document.getElementById('apimCurlSoap');
+      if (soap) {
+        soap.innerText = soap.innerText
+          .replace(/POST\s+"[^"]+"/g, 'POST "' + globalApimHost + '/soap/utility"')
+          .replace(/-H\s+"apikey:[^"]*"/g, '-H "apikey: ' + globalApimKey + '"');
+      }
     }
   </script>
 </body>
