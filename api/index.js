@@ -893,8 +893,9 @@ IntegrationCell.Include = true</code></pre>
           <b>Schnittstelle 2: SAP OData v2 Service (IS-U Utility Readings)</b><br/>
           • <b>Metadaten ($metadata):</b> Öffentlich abrufbar, damit APIM den Auto-Proxy bauen kann.<br/>
           • <b>Geschäftsdaten (MeterReadingSet):</b> Geschützt über den <b>OAuth 2.0 Bearer Token</b>!
-          <div style="margin-top: 8px;">
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link" style="background:#107E3E;">📜 $metadata XML ansehen</a>
+            <button class="btn-token" style="padding: 6px 14px; font-size: 0.85rem;" onclick="fetchLiveToken()">⚡ OData OAuth 2 Bearer Token holen</button>
           </div>
         </div>
 
@@ -939,8 +940,9 @@ IntegrationCell.Include = true</code></pre>
         <div class="note">
           <b>Schnittstelle 3: SAP OData v4 Service (Modern RAP / CAP)</b><br/>
           Geschützt über <b>OAuth 2.0 Bearer Token</b>. Liefert flache JSON-Objekte nach OASIS-Standard.
-          <div style="margin-top: 8px;">
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link" style="background:#6366F1;">📜 OData v4 $metadata XML</a>
+            <button class="btn-token" style="padding: 6px 14px; font-size: 0.85rem;" onclick="fetchLiveToken()">⚡ OData OAuth 2 Bearer Token holen</button>
           </div>
         </div>
 
@@ -960,8 +962,9 @@ IntegrationCell.Include = true</code></pre>
         <div class="note">
           <b>Schnittstelle 4: Legacy SOAP 1.1 Service</b><br/>
           Klassischer XML Web Service mit WSDL. Erfordert ebenfalls den <b>OAuth 2.0 Bearer Token</b> im HTTP-Header!
-          <div style="margin-top: 8px;">
+          <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/soap/utility?wsdl" target="_blank" class="btn-link" style="background:#E9730C;">📜 WSDL herunterladen / ansehen</a>
+            <button class="btn-token" style="padding: 6px 14px; font-size: 0.85rem;" onclick="fetchLiveToken()">⚡ SOAP OAuth 2 Bearer Token holen</button>
           </div>
         </div>
 
@@ -990,12 +993,14 @@ IntegrationCell.Include = true</code></pre>
     let currentLiveToken = "";
 
     async function fetchLiveToken() {
-      const btn = document.getElementById('btnFetchToken');
+      const btns = document.querySelectorAll('.btn-token');
       const badge = document.getElementById('tokenBadge');
       const display = document.getElementById('tokenDisplay');
       
-      btn.classList.add('loading');
-      btn.innerHTML = '<span>⏳ Token wird geholt...</span>';
+      btns.forEach(b => {
+        b.classList.add('loading');
+        b.innerHTML = '<span>⏳ Token wird geholt...</span>';
+      });
 
       try {
         const res = await fetch('/oauth/token', {
@@ -1007,52 +1012,46 @@ IntegrationCell.Include = true</code></pre>
         
         if (data.access_token) {
           currentLiveToken = data.access_token;
-          badge.classList.add('active');
-          badge.innerText = 'Gültig (' + data.expires_in + 's)';
-          display.innerText = currentLiveToken;
-          btn.innerHTML = '<span>✓ Neuer Token erteilt!</span>';
-          setTimeout(() => { btn.innerHTML = '<span>🔄 Token neu erzeugen</span>'; btn.classList.remove('loading'); }, 2000);
+          if (badge) {
+            badge.classList.add('active');
+            badge.innerText = 'Gültig (' + data.expires_in + 's)';
+          }
+          if (display) {
+            display.innerText = currentLiveToken;
+          }
+          btns.forEach(b => {
+            b.innerHTML = '<span>✓ Neuer Token erteilt!</span>';
+            setTimeout(() => { b.innerHTML = '<span>🔄 Token neu erzeugen</span>'; b.classList.remove('loading'); }, 2000);
+          });
 
           // Automatisch in alle cURL Blöcke einsetzen!
           updateAllCurlTokens(currentLiveToken);
         } else {
-          display.innerText = "Fehler: " + JSON.stringify(data);
-          btn.classList.remove('loading');
-          btn.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+          if (display) display.innerText = "Fehler: " + JSON.stringify(data);
+          btns.forEach(b => {
+            b.classList.remove('loading');
+            b.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+          });
         }
       } catch (e) {
-        display.innerText = "Netzwerkfehler: " + e.message;
-        btn.classList.remove('loading');
-        btn.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+        if (display) display.innerText = "Netzwerkfehler: " + e.message;
+        btns.forEach(b => {
+          b.classList.remove('loading');
+          b.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+        });
       }
     }
 
     function updateAllCurlTokens(token) {
-      // 1. REST
-      const restEl = document.getElementById('curlRestReading');
-      if (restEl) {
-        restEl.innerText = 'curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
-      }
-      // 2. OData v2 All
-      const odataV2All = document.getElementById('curlODataV2All');
-      if (odataV2All) {
-        odataV2All.innerText = 'curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet" \\\\\\n     -H "Accept: application/json" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
-      }
-      // 3. OData v2 Filter
-      const odataV2Filter = document.getElementById('curlODataV2Filter');
-      if (odataV2Filter) {
-        odataV2Filter.innerText = 'curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet?\\\\$filter=MeterId eq \\'DE-OL-MTR-001\\'" \\\\\\n     -H "Accept: application/json" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
-      }
-      // 4. OData v4 All
-      const odataV4All = document.getElementById('curlODataV4All');
-      if (odataV4All) {
-        odataV4All.innerText = 'curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\\\\\n     -H "Accept: application/json" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
-      }
-      // 5. SOAP
-      const soapEl = document.getElementById('curlSoap');
-      if (soapEl) {
-        soapEl.innerText = 'curl -L -X POST "${hostUrl}/soap/utility" \\\\\\n     -H "Content-Type: text/xml; charset=utf-8" \\\\\\n     -H "SOAPAction: http://btc.de/energy/metering/soap/GetMeterReading" \\\\\\n     -H "Authorization: Bearer ' + token + '" \\\\\\n     -d \\'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap">\\\\n   <soapenv:Header/>\\\\n   <soapenv:Body>\\\\n      <btc:GetMeterReadingRequest>\\\\n         <btc:MeterId>DE-OL-MTR-002</btc:MeterId>\\\\n      </btc:GetMeterReadingRequest>\\\\n   </soapenv:Body>\\\\n</soapenv:Envelope>\\';
-      }
+      const ids = ['curlRestReading', 'curlODataV2All', 'curlODataV2Filter', 'curlODataV4All', 'curlSoap'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerText = el.innerText
+            .replace(/Bearer\\s+<BITTE_OBEN_TOKEN_HOLEN>/g, 'Bearer ' + token)
+            .replace(/Bearer\\s+[a-zA-Z0-9_.-]+/g, 'Bearer ' + token);
+        }
+      });
     }
 
     function copyLiveToken(btn) {
