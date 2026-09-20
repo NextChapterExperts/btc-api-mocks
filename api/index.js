@@ -22,7 +22,7 @@ try {
 const CONFIG = {
   validClientId: process.env.CLIENT_ID || 'btc-demo-client',
   validClientSecret: process.env.CLIENT_SECRET || 'btc-demo-secret-2026',
-  validApiKey: process.env.API_KEY || 'DEMO_SECRET_TARGET_KEY_987654321',
+  validTargetApiKey: process.env.API_KEY || 'DEMO_SECRET_TARGET_KEY_987654321',
   tokenExpiresInSeconds: 300 // 5 Minuten Lebensdauer für Live-Demonstration
 };
 
@@ -63,12 +63,22 @@ function generateToken(prefix) {
   return `${prefix}_${Math.random().toString(36).substring(2)}_${Date.now().toString(36)}`;
 }
 
+// Helper: Robuste Host-URL Bestimmung (immer HTTPS auf Vercel / Cloud)
+function getBaseUrl(req) {
+  const host = req.get('host');
+  // Wenn localhost, dann http, ansonsten immer https
+  const protocol = host.includes('localhost') ? 'http' : 'https';
+  return `${protocol}://${host}`;
+}
+
 // -------------------------------------------------------------
 // 1. OpenAPI Raw Endpoint & CDN-basierte Swagger UI (100% Serverless-kompatibel)
 // -------------------------------------------------------------
 app.get('/openapi.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  res.json(openApiSpec);
+  // Dynamische Server-URL für Swagger Try-It-Out
+  const dynamicSpec = { ...openApiSpec, servers: [{ url: getBaseUrl(req) }] };
+  res.json(dynamicSpec);
 });
 
 app.get('/docs', (req, res) => {
@@ -79,15 +89,15 @@ app.get('/docs', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <title>BTC Smart Meter API · Swagger UI</title>
-  <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
-  <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5/favicon-32x32.png" sizes="32x32" />
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css" />
+  <link rel="icon" type="image/png" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/favicon-32x32.png" sizes="32x32" />
   <style>
-    html { box-sizing: border-box; overflow: -moz-scrollbars-vertical; overflow-y: scroll; }
+    html { box-sizing: border-box; overflow-y: scroll; }
     *, *:before, *:after { box-sizing: inherit; }
-    body { margin:0; background: #fafafa; font-family: sans-serif; }
+    body { margin:0; background: #fafafa; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .topbar-nav { background: #0A3D62; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; color: white; }
     .topbar-nav h1 { font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px; }
-    .topbar-nav a { color: #5bc0de; text-decoration: none; font-size: 0.9rem; font-weight: bold; }
+    .topbar-nav a { color: #38BDF8; text-decoration: none; font-size: 0.9rem; font-weight: bold; }
     .topbar-nav a:hover { text-decoration: underline; }
   </style>
 </head>
@@ -95,13 +105,13 @@ app.get('/docs', (req, res) => {
   <div class="topbar-nav">
     <h1>⚡ BTC Smart Meter API · Swagger UI</h1>
     <div>
-      <a href="/" style="margin-right: 18px;">🏠 Zur Übersicht & cURL</a>
+      <a href="/" style="margin-right: 18px;">🏠 Zurück zum Cockpit & cURL</a>
       <a href="/openapi.json" target="_blank">📜 OpenAPI JSON</a>
     </div>
   </div>
   <div id="swagger-ui"></div>
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js" charset="UTF-8"></script>
-  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.min.js"></script>
   <script>
     window.onload = function() {
       window.ui = SwaggerUIBundle({
@@ -111,9 +121,6 @@ app.get('/docs', (req, res) => {
         presets: [
           SwaggerUIBundle.presets.apis,
           SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
         ],
         layout: "BaseLayout"
       });
@@ -222,19 +229,19 @@ app.post('/oauth/token', (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 3. Auth Middleware: Bearer Token oder API-Key Check
+// 3. Auth Middleware: Bearer Token oder Target API-Key Check
 // -------------------------------------------------------------
 function authenticate(req, res, next) {
   const authHeader = req.headers['authorization'];
   const apiKeyHeader = req.headers['apikey'] || req.headers['x-api-key'] || req.headers['api-key'];
 
-  // 1. Check API Key
-  if (apiKeyHeader && apiKeyHeader === CONFIG.validApiKey) {
-    req.authMethod = 'APIKey';
+  // 1. Check Target API Key (Direktaufruf am Backend)
+  if (apiKeyHeader && apiKeyHeader === CONFIG.validTargetApiKey) {
+    req.authMethod = 'TargetAPIKey';
     return next();
   }
 
-  // 2. Check Bearer Token
+  // 2. Check Bearer Token (OAuth 2.0 Flow)
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     if (tokenStore.has(token)) {
@@ -254,7 +261,7 @@ function authenticate(req, res, next) {
 
   return res.status(401).json({
     error: 'unauthorized',
-    error_description: 'Zugriff verweigert. Gültiger Bearer-Token (OAuth2) oder APIKey Header erforderlich.'
+    error_description: 'Zugriff verweigert. Gültiger Bearer-Token (OAuth2) oder Target APIKey Header erforderlich.'
   });
 }
 
@@ -297,7 +304,7 @@ app.post('/api/v1/smartmeters', authenticate, (req, res) => {
 // 5. Interaktives Dashboard mit Reitern (cURL & SAP Destination)
 // -------------------------------------------------------------
 app.get('/', (req, res) => {
-  const hostUrl = req.protocol + '://' + req.get('host');
+  const hostUrl = getBaseUrl(req);
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.send(`
 <!DOCTYPE html>
@@ -325,7 +332,7 @@ app.get('/', (req, res) => {
       padding: 30px 20px;
     }
     .container {
-      max-width: 1000px;
+      max-width: 1050px;
       margin: 0 auto;
       background: var(--card-bg);
       border-radius: 12px;
@@ -368,7 +375,7 @@ app.get('/', (req, res) => {
     /* Info Cards Grid */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 16px;
       margin-bottom: 30px;
     }
@@ -379,7 +386,8 @@ app.get('/', (req, res) => {
       padding: 16px;
     }
     .info-card h4 { margin: 0 0 6px 0; color: #64748B; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    .info-card code { font-size: 0.95rem; color: #0F172A; font-weight: bold; word-break: break-all; }
+    .info-card code { font-size: 0.9rem; color: #0F172A; font-weight: bold; word-break: break-all; }
+    .info-card p { margin: 4px 0 0 0; font-size: 0.75rem; color: #64748B; }
 
     /* Tabs Navigation */
     .tabs-header {
@@ -387,17 +395,19 @@ app.get('/', (req, res) => {
       border-bottom: 2px solid #E2E8F0;
       margin-bottom: 24px;
       gap: 8px;
+      overflow-x: auto;
     }
     .tab-btn {
-      padding: 12px 24px;
+      padding: 12px 20px;
       border: none;
       background: none;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 600;
       color: #64748B;
       cursor: pointer;
       border-bottom: 3px solid transparent;
       margin-bottom: -2px;
+      white-space: nowrap;
       transition: all 0.2s;
     }
     .tab-btn:hover { color: var(--sap-accent); }
@@ -447,7 +457,7 @@ app.get('/', (req, res) => {
       overflow-x: auto;
       color: var(--code-text);
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       line-height: 1.5;
     }
     
@@ -475,23 +485,27 @@ app.get('/', (req, res) => {
     </div>
 
     <div class="body-content">
-      <!-- Info Cards Grid -->
+      <!-- Info Cards Grid: Echte OAuth2 Daten -->
       <div class="grid">
         <div class="info-card">
-          <h4>Client ID (OAuth2)</h4>
+          <h4>OAuth2 Client ID</h4>
           <code>btc-demo-client</code>
+          <p>Für BTP Destination & Token-Abruf</p>
         </div>
         <div class="info-card">
-          <h4>Client Secret</h4>
+          <h4>OAuth2 Client Secret</h4>
           <code>btc-demo-secret-2026</code>
+          <p>Geheimer Schlüssel für Token-Server</p>
         </div>
         <div class="info-card">
-          <h4>Direct Target API Key</h4>
+          <h4>OAuth2 Token URL</h4>
+          <code>${hostUrl}/oauth/token</code>
+          <p>POST-Endpunkt für Token & Refresh</p>
+        </div>
+        <div class="info-card">
+          <h4>Backend Target API Key (Optional)</h4>
           <code>DEMO_SECRET_TARGET_KEY_987654321</code>
-        </div>
-        <div class="info-card">
-          <h4>Token Gültigkeit</h4>
-          <code>300s (5 Min. für Live-Demo)</code>
+          <p>Nur für Szenario 1 (Direktzugriff ohne OAuth2)</p>
         </div>
       </div>
 
@@ -499,22 +513,22 @@ app.get('/', (req, res) => {
       <div class="tabs-header">
         <button class="tab-btn active" onclick="switchTab('curl')">💻 cURL & Terminal Aufrufe</button>
         <button class="tab-btn" onclick="switchTab('destination')">☁️ SAP BTP Destination Konfiguration</button>
-        <button class="tab-btn" onclick="switchTab('integration-cell')">🏛️ Integration Cell Policies</button>
+        <button class="tab-btn" onclick="switchTab('dual-key')">🔑 Erklärung: Developer Key vs. Target Key</button>
       </div>
 
       <!-- TAB 1: cURL -->
       <div id="tab-curl" class="tab-pane active">
         <div class="note">
-          💡 <b>Tipp für Peter:</b> Klicke einfach oben rechts auf <b>Kopieren</b> und füge den Befehl direkt in dein Terminal ein. Die URL <code>${hostUrl}</code> ist bereits dynamisch eingesetzt!
+          💡 <b>HTTPS erzwungen:</b> Alle Befehle nutzen <code>https://</code> und das Flag <code>-L</code> (Follow Redirects), damit es auf Vercel sofort klappt!
         </div>
 
-        <h3>1. Token abholen (OAuth 2.0 Client Credentials Flow)</h3>
+        <h3>1. Token abholen (OAuth 2.0 Client Credentials)</h3>
         <div class="code-box">
           <div class="code-box-header">
-            <span>POST /oauth/token</span>
+            <span>POST ${hostUrl}/oauth/token</span>
             <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
           </div>
-          <pre><code>curl -X POST "${hostUrl}/oauth/token" \\
+          <pre><code>curl -L -X POST "${hostUrl}/oauth/token" \\
      -H "Content-Type: application/x-www-form-urlencoded" \\
      -d "grant_type=client_credentials&client_id=btc-demo-client&client_secret=btc-demo-secret-2026"</code></pre>
         </div>
@@ -522,32 +536,33 @@ app.get('/', (req, res) => {
         <h3>2. Zählerdaten abrufen mit Bearer Token</h3>
         <div class="code-box">
           <div class="code-box-header">
-            <span>GET /api/v1/smartmeters</span>
+            <span>GET ${hostUrl}/api/v1/smartmeters</span>
             <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
           </div>
-          <pre><code>curl -X GET "${hostUrl}/api/v1/smartmeters" \\
-     -H "Authorization: Bearer &lt;DEIN_ACCESS_TOKEN_HIER_EINSETZEN&gt;"</code></pre>
+          <pre><code>curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
+     -H "Authorization: Bearer &lt;ACCESS_TOKEN_HIER_EINSETZEN&gt;"</code></pre>
         </div>
 
         <h3>3. Token live refreshen (Refresh Token Flow)</h3>
         <p style="font-size: 0.9rem; color: #64748B;">Zeige vor der Gruppe, wie der ablaufende Token nahtlos durch den <code>refresh_token</code> erneuert wird:</p>
         <div class="code-box">
           <div class="code-box-header">
-            <span>POST /oauth/token (grant_type=refresh_token)</span>
+            <span>POST ${hostUrl}/oauth/token (grant_type=refresh_token)</span>
             <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
           </div>
-          <pre><code>curl -X POST "${hostUrl}/oauth/token" \\
+          <pre><code>curl -L -X POST "${hostUrl}/oauth/token" \\
      -H "Content-Type: application/x-www-form-urlencoded" \\
-     -d "grant_type=refresh_token&refresh_token=&lt;DEIN_REFRESH_TOKEN_HIER_EINSETZEN&gt;"</code></pre>
+     -d "grant_type=refresh_token&refresh_token=&lt;REFRESH_TOKEN_HIER_EINSETZEN&gt;"</code></pre>
         </div>
 
-        <h3>4. Alternativer Direktaufruf mit API Key</h3>
+        <h3>4. Alternativer Direktaufruf mit Backend Target API Key</h3>
+        <p style="font-size: 0.9rem; color: #64748B;">Für den Test ohne OAuth (z. B. wenn APIM den Target-Key per AssignMessage injiziert):</p>
         <div class="code-box">
           <div class="code-box-header">
-            <span>GET /api/v1/smartmeters (API-Key Auth)</span>
+            <span>GET ${hostUrl}/api/v1/smartmeters (API-Key Auth)</span>
             <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
           </div>
-          <pre><code>curl -X GET "${hostUrl}/api/v1/smartmeters" \\
+          <pre><code>curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
      -H "APIKey: DEMO_SECRET_TARGET_KEY_987654321"</code></pre>
         </div>
       </div>
@@ -578,13 +593,21 @@ IntegrationCell.Include = true</code></pre>
         </div>
       </div>
 
-      <!-- TAB 3: Integration Cell Policies -->
-      <div id="tab-integration-cell" class="tab-pane">
+      <!-- TAB 3: Dual Key Erklärung -->
+      <div id="tab-dual-key" class="tab-pane">
         <div class="note">
-          🛡️ <b>Dual-Key Entkopplung:</b> Der Konsument nutzt seinen Developer Key am Ingress. Die Cell terminiert den Key und ruft das Ziel per OAuth2 ab.
+          🧠 <b>Der Unterschied zwischen Developer Key und Target API Key:</b>
         </div>
+        
+        <p>In einer professionellen API-Gateway-Architektur gibt es zwei völlig getrennte Schlüssel:</p>
+        <ul>
+          <li><b>1. Der Developer Key (Ingress):</b><br/>
+              Wird im <b>SAP Developer Hub</b> an die App des Konsumenten vergeben. Er dient der <b>Identifikation des Anrufers, Quota-Überwachung und Traffic-Messung</b> an der Gateway-Pforte.</li>
+          <li><b>2. Der Target API Key / OAuth Token (Egress):</b><br/>
+              Ist das Geheimnis des <b>Zielsystems (dieser Mock-Server bzw. S/4HANA)</b>. Der Konsument darf diesen internen Schlüssel niemals kennen! Die Integration Cell terminiert den Developer Key und injiziert den Backend-Schlüssel oder das OAuth-Token.</li>
+        </ul>
 
-        <h3>Ingress Authorization Policy (Developer Hub Validierung)</h3>
+        <h3>Integration Cell Ingress Authorization Policy</h3>
         <div class="code-box">
           <div class="code-box-header">
             <span>Policy: Authorization_ValidateDevHub.xml</span>
