@@ -508,15 +508,15 @@ app.get('/', (req, res) => {
   <title>BTC Energy API Mock Suite · 4 Protokolle</title>
   <style>
     :root {
-      --sap-blue: #0A3D62;
-      --sap-accent: #0070F2;
-      --sap-green: #107E3E;
-      --sap-purple: #6366F1;
-      --sap-orange: #E9730C;
-      --bg-gray: #F4F6F9;
+      --primary: #1E293B;       /* Ruhiges Schiefergrau */
+      --accent: #2563EB;        /* SAP/Professional Blau */
+      --accent-soft: #EFF6FF;   /* Zartes Blau */
+      --border-color: #E2E8F0;  /* Dezente Ränder */
+      --bg-gray: #F8FAFC;       /* Ruhiger Hintergrund */
       --card-bg: #FFFFFF;
-      --text-main: #1C2430;
-      --code-bg: #1E293B;
+      --text-main: #0F172A;     /* Haupttext dunkelgrau */
+      --text-muted: #64748B;    /* Sekundärtext */
+      --code-bg: #0F172A;
       --code-text: #38BDF8;
     }
     * { box-sizing: border-box; }
@@ -532,203 +532,224 @@ app.get('/', (req, res) => {
       margin: 0 auto;
       background: var(--card-bg);
       border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 25px rgba(0,0,0,0.03);
+      border: 1px solid var(--border-color);
       overflow: hidden;
     }
     .header {
-      background: linear-gradient(135deg, #0A3D62 0%, #0070F2 100%);
+      background: #1E293B;
       color: white;
-      padding: 30px;
+      padding: 28px 32px;
+      border-bottom: 1px solid #334155;
     }
-    .header h1 { margin: 0 0 8px 0; font-size: 1.8rem; }
-    .header p { margin: 0; opacity: 0.9; font-size: 1rem; }
+    .header h1 { margin: 0 0 6px 0; font-size: 1.6rem; font-weight: 700; }
+    .header p { margin: 0; color: #94A3B8; font-size: 0.95rem; }
     
-    /* Die 4 Schnittstellen Kacheln oben */
+    /* 4 Schnittstellen Kacheln oben */
     .protocol-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-top: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 20px;
     }
     .protocol-card {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px 16px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.15s ease-in-out;
     }
     .protocol-card:hover {
-      background: rgba(255,255,255,0.25);
-      transform: translateY(-2px);
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.25);
     }
     .protocol-card.selected {
       background: white;
       color: var(--text-main);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       border-color: white;
     }
-    .protocol-card.selected h3 { color: var(--sap-accent); }
-    .protocol-card h3 { margin: 0 0 4px 0; font-size: 1.1rem; color: white; display: flex; align-items: center; justify-content: space-between; }
+    .protocol-card.selected h3 { color: var(--accent); }
+    .protocol-card h3 { margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 600; color: white; display: flex; align-items: center; justify-content: space-between; }
     .protocol-card .badge {
       font-size: 0.7rem;
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-weight: bold;
-      background: rgba(0,0,0,0.2);
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.15);
     }
-    .protocol-card.selected .badge { background: #E0F2FE; color: #0369A1; }
-    .protocol-card p { margin: 0; font-size: 0.82rem; opacity: 0.85; }
+    .protocol-card.selected .badge { background: #F1F5F9; color: #475569; }
+    .protocol-card p { margin: 0; font-size: 0.8rem; color: #94A3B8; line-height: 1.4; }
+    .protocol-card.selected p { color: #64748B; }
 
-    .body-content { padding: 30px; }
+    .body-content { padding: 28px 32px; }
     
+    /* Ruhige Button-Styles */
+    .btn-token {
+      background: #F8FAFC;
+      color: #1E293B;
+      border: 1px solid #CBD5E1;
+      padding: 6px 13px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-token:hover { background: #F1F5F9; border-color: #94A3B8; }
+    .btn-token.loading { opacity: 0.6; pointer-events: none; }
+
+    .btn-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #F8FAFC;
+      color: #1E293B;
+      border: 1px solid #CBD5E1;
+      text-decoration: none;
+      padding: 6px 13px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .btn-link:hover { background: #F1F5F9; border-color: #94A3B8; color: #0F172A; }
+
     /* Live Interactive Token Generator Bar */
     .token-generator-box {
-      background: #F0F9FF;
-      border: 2px solid #BAE6FD;
-      border-radius: 10px;
-      padding: 18px 24px;
-      margin-bottom: 24px;
+      background: #F8FAFC;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 22px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .token-header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 10px;
     }
-    .token-header-row h4 { margin: 0; color: #0369A1; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
-    .btn-token {
-      background: #0070F2;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      font-weight: bold;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.2s;
-    }
-    .btn-token:hover { background: #0056b3; }
-    .btn-token.loading { opacity: 0.7; pointer-events: none; }
+    .token-header-row h4 { margin: 0; color: #334155; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px; }
     .token-display-row {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       background: white;
-      border: 1px solid #CBD5E1;
+      border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 8px 14px;
+      padding: 6px 12px;
     }
     .token-display-row code {
       flex: 1;
-      color: #0F172A;
+      color: #334155;
       font-family: monospace;
-      font-size: 0.9rem;
+      font-size: 0.84rem;
       word-break: break-all;
     }
     .token-status-badge {
-      font-size: 0.75rem;
-      font-weight: bold;
-      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 2px 7px;
       border-radius: 4px;
-      background: #E2E8F0;
-      color: #475569;
+      background: #F1F5F9;
+      color: #64748B;
     }
     .token-status-badge.active {
-      background: #DCFCE7;
+      background: #F0FDF4;
       color: #166534;
+      border: 1px solid #BBF7D0;
     }
 
-    /* Interaktives APIM Live Test Cockpit (Grün) */
+    /* Interaktives APIM Live Test Cockpit (Dezent & Ruhig) */
     .apim-cockpit-box {
-      background: #F0FDF4;
-      border: 2px solid #86EFAC;
-      border-radius: 10px;
+      background: #F8FAFC;
+      border: 1px solid #CBD5E1;
+      border-radius: 8px;
       padding: 16px 20px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .apim-cockpit-box h4 {
-      margin: 0 0 12px 0;
-      color: #166534;
-      font-size: 0.95rem;
+      margin: 0 0 10px 0;
+      color: #1E293B;
+      font-size: 0.9rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
     .apim-cockpit-grid {
       display: grid;
       grid-template-columns: 2fr 1fr;
-      gap: 16px;
+      gap: 12px;
     }
     @media (max-width: 768px) {
       .apim-cockpit-grid { grid-template-columns: 1fr; }
     }
     .apim-field label {
       display: block;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #166534;
-      margin-bottom: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 4px;
     }
     .apim-field input {
       width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #86EFAC;
+      padding: 7px 11px;
+      border: 1px solid #CBD5E1;
       border-radius: 6px;
       font-family: monospace;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       background: white;
-      color: #14532D;
+      color: #0F172A;
+      transition: border 0.15s ease;
     }
     .apim-field input:focus {
       outline: none;
-      border-color: #16A34A;
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+      border-color: #2563EB;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }
     .apim-hint {
-      font-size: 0.8rem;
-      color: #15803D;
-      margin-top: 10px;
+      font-size: 0.78rem;
+      color: #64748B;
+      margin-top: 8px;
       line-height: 1.4;
     }
-    .note-purple {
-      background: #F5F3FF;
-      border-left-color: #8B5CF6;
-      color: #4C1D95;
-    }
 
-    /* Tabs Header */
+    /* Tabs Header - Kompakt & Umbruchsicher */
     .tabs-header {
       display: flex;
-      border-bottom: 2px solid #E2E8F0;
-      margin-bottom: 24px;
-      gap: 8px;
-      overflow-x: auto;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 20px;
+      gap: 4px;
     }
     .tab-btn {
-      padding: 12px 20px;
+      padding: 8px 14px;
       border: none;
       background: none;
-      font-size: 1rem;
+      font-size: 0.85rem;
       font-weight: 600;
       color: #64748B;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      white-space: nowrap;
-      transition: all 0.2s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      white-space: normal;
+      transition: all 0.15s ease;
+      border-radius: 4px 4px 0 0;
     }
-    .tab-btn:hover { color: var(--sap-accent); }
+    .tab-btn:hover { color: var(--text-main); background: #F1F5F9; }
     .tab-btn.active {
-      color: var(--sap-accent);
-      border-bottom-color: var(--sap-accent);
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: #F8FAFC;
     }
 
     .tab-pane { display: none; }
@@ -738,64 +759,62 @@ app.get('/', (req, res) => {
     .code-box {
       background: var(--code-bg);
       border-radius: 8px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      border: 1px solid #334155;
     }
     .code-box-header {
-      background: #0F172A;
-      padding: 8px 16px;
+      background: #1E293B;
+      padding: 7px 14px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       color: #94A3B8;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-family: monospace;
+      border-bottom: 1px solid #334155;
     }
     .copy-btn {
       background: #334155;
-      color: #F8FAFC;
-      border: none;
-      padding: 4px 10px;
+      color: #F1F5F9;
+      border: 1px solid #475569;
+      padding: 3px 9px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 0.75rem;
-      font-weight: bold;
+      font-size: 0.72rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
     }
     .copy-btn:hover { background: #475569; }
-    .copy-btn.copied { background: #10B981; }
+    .copy-btn.copied { background: #059669; border-color: #059669; color: white; }
     pre {
       margin: 0;
-      padding: 16px;
+      padding: 14px 16px;
       overflow-x: auto;
-      color: var(--code-text);
+      color: #E2E8F0;
       font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-      font-size: 0.88rem;
+      font-size: 0.83rem;
       line-height: 1.5;
     }
     
     .note {
-      background: #EFF6FF;
-      border-left: 4px solid var(--sap-accent);
-      padding: 12px 16px;
+      background: #F8FAFC;
+      border-left: 3px solid #64748B;
+      padding: 10px 14px;
       border-radius: 0 6px 6px 0;
-      margin-bottom: 20px;
-      font-size: 0.9rem;
-      color: #1E3A8A;
-    }
-    .btn-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #0070F2;
-      color: white;
-      text-decoration: none;
-      padding: 6px 12px;
-      border-radius: 4px;
+      margin-bottom: 18px;
       font-size: 0.85rem;
-      font-weight: 600;
+      color: #334155;
+      line-height: 1.45;
+      border-top: 1px solid var(--border-color);
+      border-right: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
     }
-    .btn-link:hover { background: #0056b3; }
+    .note-purple {
+      background: #F8FAFC;
+      border-left-color: #6366F1;
+      color: #334155;
+    }
   </style>
 </head>
 <body>
@@ -858,10 +877,10 @@ app.get('/', (req, res) => {
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'dest')">⚙️ 2. BTP Destination & Setup</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'policy')">📜 4. APIM Policies (XML)</button>
+          <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">🔌 1. Direkt-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'dest')">⚙️ 2. BTP Destination</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'apim')">🛡️ 3. APIM Proxy-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'policy')">📜 4. Policies (XML)</button>
         </div>
 
         <!-- TAB 1: Direkt Test -->
@@ -968,10 +987,10 @@ IntegrationCell.Include = true</code></pre>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'dest')">⚙️ 2. BTP Destination & Setup</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'policy')">📜 4. APIM Policies (XML)</button>
+          <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">🔌 1. Direkt-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'dest')">⚙️ 2. BTP Destination</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'apim')">🛡️ 3. APIM Proxy-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'policy')">📜 4. Policies (XML)</button>
         </div>
 
         <!-- TAB 1: Direkt Test -->
@@ -1088,10 +1107,10 @@ IntegrationCell.Include = true</code></pre>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'dest')">⚙️ 2. BTP Destination & Setup</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'policy')">📜 4. APIM Policies (XML)</button>
+          <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">🔌 1. Direkt-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'dest')">⚙️ 2. BTP Destination</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'apim')">🛡️ 3. APIM Proxy-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'policy')">📜 4. Policies (XML)</button>
         </div>
 
         <!-- TAB 1: Direkt Test -->
@@ -1181,10 +1200,10 @@ IntegrationCell.Include = true</code></pre>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">🔌 1. Direkt-Test (Backend Mock)</button>
-          <button class="tab-btn" onclick="switchInnerTab('soap', 'dest')">⚙️ 2. BTP Destination & Setup</button>
-          <button class="tab-btn" onclick="switchInnerTab('soap', 'apim')">🛡️ 3. APIM Proxy Test (Mit Developer Key)</button>
-          <button class="tab-btn" onclick="switchInnerTab('soap', 'policy')">📜 4. APIM Policies (XML)</button>
+          <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">🔌 1. Direkt-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'dest')">⚙️ 2. BTP Destination</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'apim')">🛡️ 3. APIM Proxy-Test</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'policy')">📜 4. Policies (XML)</button>
         </div>
 
         <!-- TAB 1: Direkt Test -->
