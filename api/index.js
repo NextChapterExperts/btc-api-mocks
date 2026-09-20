@@ -299,9 +299,8 @@ app.post('/api/v1/smartmeters', authenticateOAuth, (req, res) => {
 // 2. SCHNITTSTELLE 2: SAP OData v2 Service (IS-U Utility Readings)
 // =============================================================
 
-// OData v2 Service Root
+// OData v2 Service Root (öffentlich zur Service Discovery)
 app.get('/odata/v2/utility/', (req, res) => {
-  const base = getBaseUrl(req) + '/odata/v2/utility/';
   res.setHeader('Content-Type', 'application/json');
   res.json({
     d: {
@@ -310,33 +309,8 @@ app.get('/odata/v2/utility/', (req, res) => {
   });
 });
 
-// OData v2 $metadata XML (Klassischer EDMX-Standard, den APIM für Auto-Proxy nutzt!)
-app.get(['/odata/v2/utility/$metadata', '/odata/v2/utility/\\$metadata'], (req, res) => {
-  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-  res.send(`<?xml version="1.0" encoding="utf-8"?>
-<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
-  <edmx:DataServices m:DataServiceVersion="2.0">
-    <Schema Namespace="BTC_UTILITY_ISU_SRV" xml:lang="de" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
-      <EntityType Name="MeterReading" sap:content-version="1">
-        <Key>
-          <PropertyRef Name="MeterId" />
-        </Key>
-        <Property Name="MeterId" Type="Edm.String" Nullable="false" MaxLength="20" sap:label="Zählernummer" />
-        <Property Name="Customer" Type="Edm.String" MaxLength="60" sap:label="Kunde / Anschlussnehmer" />
-        <Property Name="ReadingKWh" Type="Edm.Decimal" Precision="12" Scale="3" Nullable="false" sap:label="Zählerstand kWh" />
-        <Property Name="Tariff" Type="Edm.String" MaxLength="40" sap:label="Tarifbezeichnung" />
-        <Property Name="Status" Type="Edm.String" MaxLength="10" sap:label="Status" />
-      </EntityType>
-      <EntityContainer Name="BTC_UTILITY_ISU_Entities" m:IsDefaultEntityContainer="true">
-        <EntitySet Name="MeterReadingSet" EntityType="BTC_UTILITY_ISU_SRV.MeterReading" sap:creatable="true" sap:updatable="true" sap:deletable="false" sap:pageable="true" />
-      </EntityContainer>
-    </Schema>
-  </edmx:DataServices>
-</edmx:Edmx>`);
-});
-
-// OData v2 EntitySet
-app.get('/odata/v2/utility/MeterReadingSet', (req, res) => {
+// OData v2 EntitySet (Geschützt per OAuth2 Bearer Token)
+app.get('/odata/v2/utility/MeterReadingSet', authenticateOAuth, (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const filter = req.query.$filter;
   let data = meterDatabase.map(m => ({
@@ -364,8 +338,8 @@ app.get('/odata/v2/utility/MeterReadingSet', (req, res) => {
   });
 });
 
-// OData v2 Single Entity
-app.get('/odata/v2/utility/MeterReadingSet\\(\':id\'\\)', (req, res) => {
+// OData v2 Single Entity (Geschützt per OAuth2 Bearer Token)
+app.get('/odata/v2/utility/MeterReadingSet\\(\':id\'\\)', authenticateOAuth, (req, res) => {
   const id = req.params.id;
   const item = meterDatabase.find(m => m.meterId === id);
   if (!item) {
@@ -392,7 +366,7 @@ app.get('/odata/v2/utility/MeterReadingSet\\(\':id\'\\)', (req, res) => {
 // 3. SCHNITTSTELLE 3: SAP OData v4 Service (Modern RAP / CAP)
 // =============================================================
 
-// OData v4 Service Root
+// OData v4 Service Root (öffentlich zur Service Discovery)
 app.get('/odata/v4/utility/', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.json({
@@ -403,33 +377,8 @@ app.get('/odata/v4/utility/', (req, res) => {
   });
 });
 
-// OData v4 $metadata XML (OASIS OData v4 EDMX Standard)
-app.get(['/odata/v4/utility/$metadata', '/odata/v4/utility/\\$metadata'], (req, res) => {
-  res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-  res.send(`<?xml version="1.0" encoding="utf-8"?>
-<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
-  <edmx:DataServices>
-    <Schema Namespace="com.sap.btc.utility" xmlns="http://docs.oasis-open.org/odata/ns/edm">
-      <EntityType Name="MeterReading">
-        <Key>
-          <PropertyRef Name="meterId" />
-        </Key>
-        <Property Name="meterId" Type="Edm.String" Nullable="false" MaxLength="20" />
-        <Property Name="customer" Type="Edm.String" MaxLength="60" />
-        <Property Name="readingKWh" Type="Edm.Decimal" Precision="12" Scale="3" Nullable="false" />
-        <Property Name="tariff" Type="Edm.String" MaxLength="40" />
-        <Property Name="status" Type="Edm.String" MaxLength="10" />
-      </EntityType>
-      <EntityContainer Name="UtilityService">
-        <EntitySet Name="MeterReadings" EntityType="com.sap.btc.utility.MeterReading" />
-      </EntityContainer>
-    </Schema>
-  </edmx:DataServices>
-</edmx:Edmx>`);
-});
-
-// OData v4 EntitySet (Flache JSON Struktur nach v4 Spezifikation)
-app.get('/odata/v4/utility/MeterReadings', (req, res) => {
+// OData v4 EntitySet (Geschützt per OAuth2 Bearer Token)
+app.get('/odata/v4/utility/MeterReadings', authenticateOAuth, (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   const data = meterDatabase.map(m => ({
     meterId: m.meterId,
@@ -449,7 +398,7 @@ app.get('/odata/v4/utility/MeterReadings', (req, res) => {
 // 4. SCHNITTSTELLE 4: Legacy SOAP 1.1 Service (WSDL & XML Envelope)
 // =============================================================
 
-// WSDL Download (Web Services Description Language)
+// WSDL Download (öffentlich zur Metadaten-Prüfung)
 app.get('/soap/utility', (req, res) => {
   if (req.query.wsdl !== undefined) {
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
@@ -516,12 +465,11 @@ app.get('/soap/utility', (req, res) => {
   res.redirect('/');
 });
 
-// SOAP Inbound Processing (Verarbeitet <soapenv:Envelope> und liefert XML Response)
-app.post('/soap/utility', (req, res) => {
+// SOAP Inbound Processing (Prüft Authorization Header ODER SOAP WS-Security Header)
+app.post('/soap/utility', authenticateOAuth, (req, res) => {
   const xmlBody = typeof req.body === 'string' ? req.body : '';
   res.setHeader('Content-Type', 'text/xml; charset=utf-8');
 
-  // Einfaches Extrahieren der MeterId aus dem SOAP Body
   let requestedMeterId = "DE-OL-MTR-001";
   const match = xmlBody.match(/<MeterId>(.*?)<\/MeterId>/i);
   if (match && match[1]) {
@@ -634,21 +582,69 @@ app.get('/', (req, res) => {
 
     .body-content { padding: 30px; }
     
-    /* Credentials Bar */
-    .cred-bar {
-      background: #F8FAFC;
-      border: 1px solid #E2E8F0;
-      border-radius: 8px;
-      padding: 16px 20px;
+    /* Live Interactive Token Generator Bar */
+    .token-generator-box {
+      background: #F0F9FF;
+      border: 2px solid #BAE6FD;
+      border-radius: 10px;
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .token-header-row {
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
       align-items: center;
-      margin-bottom: 30px;
+      flex-wrap: wrap;
+      gap: 12px;
     }
-    .cred-item h5 { margin: 0 0 4px 0; color: #64748B; font-size: 0.75rem; text-transform: uppercase; }
-    .cred-item code { font-size: 0.95rem; font-weight: bold; color: #0F172A; }
+    .token-header-row h4 { margin: 0; color: #0369A1; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+    .btn-token {
+      background: #0070F2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-token:hover { background: #0056b3; }
+    .btn-token.loading { opacity: 0.7; pointer-events: none; }
+    .token-display-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: white;
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      padding: 8px 14px;
+    }
+    .token-display-row code {
+      flex: 1;
+      color: #0F172A;
+      font-family: monospace;
+      font-size: 0.9rem;
+      word-break: break-all;
+    }
+    .token-status-badge {
+      font-size: 0.75rem;
+      font-weight: bold;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: #E2E8F0;
+      color: #475569;
+    }
+    .token-status-badge.active {
+      background: #DCFCE7;
+      color: #166534;
+    }
 
     /* Developer Key Input */
     .devkey-container {
@@ -797,23 +793,18 @@ app.get('/', (req, res) => {
 
     <div class="body-content">
 
-      <!-- OAUTH2 GLOBAL CREDENTIALS -->
-      <div class="cred-bar">
-        <div class="cred-item">
-          <h5>OAuth2 Client ID</h5>
-          <code>btc-demo-client</code>
+      <!-- DER INTERAKTIVE TOKEN GENERATOR KNOPF -->
+      <div class="token-generator-box">
+        <div class="token-header-row">
+          <h4>🔐 Live OAuth 2.0 Token Cockpit</h4>
+          <button id="btnFetchToken" class="btn-token" onclick="fetchLiveToken()">
+            <span>⚡ OAuth 2.0 Bearer Token holen</span>
+          </button>
         </div>
-        <div class="cred-item">
-          <h5>OAuth2 Client Secret</h5>
-          <code>btc-demo-secret-2026</code>
-        </div>
-        <div class="cred-item">
-          <h5>OAuth2 Token URL</h5>
-          <code>${hostUrl}/oauth/token</code>
-        </div>
-        <div class="cred-item">
-          <h5>Token Lebensdauer</h5>
-          <code>300s (5 Min.)</code>
+        <div class="token-display-row">
+          <span id="tokenBadge" class="token-status-badge">Kein Token</span>
+          <code id="tokenDisplay">&lt;Klicke auf den blauen Knopf oben, um live einen echten Token anzufordern&gt;</code>
+          <button class="copy-btn" onclick="copyLiveToken(this)">Token kopieren</button>
         </div>
       </div>
 
@@ -829,7 +820,7 @@ app.get('/', (req, res) => {
       <div id="section-rest" class="protocol-section">
         <div class="note">
           <b>Schnittstelle 1: REST mit OpenAPI 3.0.3</b><br/>
-          Inklusive interaktiver Swagger UI und echtem Token-Refresh. Ideal für das Durchstich-Szenario auf der Integration Cell!
+          Inklusive interaktiver Swagger UI und echtem Token-Refresh.
           <div style="margin-top: 8px;">
             <a href="/docs" target="_blank" class="btn-link">📖 Swagger UI öffnen</a>
             <a href="/openapi.json" target="_blank" class="btn-link" style="background:#0F172A;">📜 OpenAPI 3.0 Spezifikation</a>
@@ -843,7 +834,7 @@ app.get('/', (req, res) => {
         </div>
 
         <div id="rest-curl" class="tab-pane active">
-          <h3>1. Token holen (OAuth2 Client Credentials)</h3>
+          <h3>1. Token abholen per Terminal (OAuth2 Client Credentials)</h3>
           <div class="code-box">
             <div class="code-box-header"><span>POST ${hostUrl}/oauth/token</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code>curl -L -X POST "${hostUrl}/oauth/token" \\
@@ -851,11 +842,11 @@ app.get('/', (req, res) => {
      -d "grant_type=client_credentials&client_id=btc-demo-client&client_secret=btc-demo-secret-2026"</code></pre>
           </div>
 
-          <h3>2. Zählerdaten abrufen (GET /api/v1/smartmeters)</h3>
+          <h3>2. Zählerdaten abrufen mit Bearer Token</h3>
           <div class="code-box">
-            <div class="code-box-header"><span>GET ${hostUrl}/api/v1/smartmeters</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code>curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
-     -H "Authorization: Bearer &lt;ACCESS_TOKEN&gt;"</code></pre>
+            <div class="code-box-header"><span>GET /api/v1/smartmeters</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <pre><code id="curlRestReading">curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
+     -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
           </div>
 
           <h3>3. Integration Cell Aufruf mit Developer Key</h3>
@@ -900,16 +891,16 @@ IntegrationCell.Include = true</code></pre>
       <div id="section-odata-v2" class="protocol-section" style="display:none;">
         <div class="note">
           <b>Schnittstelle 2: SAP OData v2 Service (IS-U Utility Readings)</b><br/>
-          Besitzt eine voll kompatible <code>$metadata</code> XML. Wenn du diese URL im SAP API Portal beim Anlegen eines API Proxies als <b>Service URL</b> einträgst, generiert APIM <b>vollautomatisch alle Ressourcen und die Swagger UI!</b>
+          • <b>Metadaten ($metadata):</b> Öffentlich abrufbar, damit APIM den Auto-Proxy bauen kann.<br/>
+          • <b>Geschäftsdaten (MeterReadingSet):</b> Geschützt über den <b>OAuth 2.0 Bearer Token</b>!
           <div style="margin-top: 8px;">
             <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link" style="background:#107E3E;">📜 $metadata XML ansehen</a>
-            <a href="/odata/v2/utility/MeterReadingSet" target="_blank" class="btn-link">📊 MeterReadingSet (JSON)</a>
           </div>
         </div>
 
         <div class="tabs-header">
           <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'proxy')">🚀 Proxy-Erstellung im APIM</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'curl')">💻 cURL Aufrufe</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'curl')">💻 cURL Aufrufe (mit Bearer Token)</button>
         </div>
 
         <div id="odata-v2-proxy" class="tab-pane active">
@@ -923,18 +914,20 @@ IntegrationCell.Include = true</code></pre>
         </div>
 
         <div id="odata-v2-curl" class="tab-pane">
-          <h3>Alle Zählerstände abrufen</h3>
+          <h3>1. Alle Zählerstände abrufen (mit echtem Bearer Token)</h3>
           <div class="code-box">
             <div class="code-box-header"><span>GET /odata/v2/utility/MeterReadingSet</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code>curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet" \\
-     -H "Accept: application/json"</code></pre>
+            <pre><code id="curlODataV2All">curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet" \\
+     -H "Accept: application/json" \\
+     -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
           </div>
 
-          <h3>Gefilterte Abfrage ($filter)</h3>
+          <h3>2. Gefilterte Abfrage ($filter) mit Bearer Token</h3>
           <div class="code-box">
             <div class="code-box-header"><span>GET mit $filter</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code>curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet?\$filter=MeterId eq 'DE-OL-MTR-001'" \\
-     -H "Accept: application/json"</code></pre>
+            <pre><code id="curlODataV2Filter">curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet?\$filter=MeterId eq 'DE-OL-MTR-001'" \\
+     -H "Accept: application/json" \\
+     -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
           </div>
         </div>
       </div>
@@ -945,18 +938,18 @@ IntegrationCell.Include = true</code></pre>
       <div id="section-odata-v4" class="protocol-section" style="display:none;">
         <div class="note">
           <b>Schnittstelle 3: SAP OData v4 Service (Modern RAP / CAP)</b><br/>
-          Entspricht dem modernen OASIS OData v4 Standard mit flachen JSON-Paylodas (<code>@odata.context</code> und <code>value</code>).
+          Geschützt über <b>OAuth 2.0 Bearer Token</b>. Liefert flache JSON-Objekte nach OASIS-Standard.
           <div style="margin-top: 8px;">
             <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link" style="background:#6366F1;">📜 OData v4 $metadata XML</a>
-            <a href="/odata/v4/utility/MeterReadings" target="_blank" class="btn-link">📊 MeterReadings (v4 JSON)</a>
           </div>
         </div>
 
-        <h3>Zählerstände im OData v4 Format abrufen</h3>
+        <h3>Zählerstände im OData v4 Format abrufen (mit Bearer Token)</h3>
         <div class="code-box">
           <div class="code-box-header"><span>GET /odata/v4/utility/MeterReadings</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-          <pre><code>curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\
-     -H "Accept: application/json"</code></pre>
+          <pre><code id="curlODataV4All">curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\
+     -H "Accept: application/json" \\
+     -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
         </div>
       </div>
 
@@ -966,18 +959,19 @@ IntegrationCell.Include = true</code></pre>
       <div id="section-soap" class="protocol-section" style="display:none;">
         <div class="note">
           <b>Schnittstelle 4: Legacy SOAP 1.1 Service</b><br/>
-          Ein klassischer XML Web Service inklusive WSDL-Datei. Das Paradebeispiel für APIM-Demos: Hier demonstrierst du <code>XMLToJSON</code>, SOAP-Envelopes und Header-Mapping!
+          Klassischer XML Web Service mit WSDL. Erfordert ebenfalls den <b>OAuth 2.0 Bearer Token</b> im HTTP-Header!
           <div style="margin-top: 8px;">
             <a href="/soap/utility?wsdl" target="_blank" class="btn-link" style="background:#E9730C;">📜 WSDL herunterladen / ansehen</a>
           </div>
         </div>
 
-        <h3>SOAP Request mit XML-Payload (Postman / cURL)</h3>
+        <h3>SOAP Request mit XML-Payload & Bearer Token</h3>
         <div class="code-box">
           <div class="code-box-header"><span>POST ${hostUrl}/soap/utility</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-          <pre><code>curl -L -X POST "${hostUrl}/soap/utility" \\
+          <pre><code id="curlSoap">curl -L -X POST "${hostUrl}/soap/utility" \\
      -H "Content-Type: text/xml; charset=utf-8" \\
      -H "SOAPAction: http://btc.de/energy/metering/soap/GetMeterReading" \\
+     -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;" \\
      -d '&lt;soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap"&gt;
    &lt;soapenv:Header/&gt;
    &lt;soapenv:Body&gt;
@@ -993,6 +987,85 @@ IntegrationCell.Include = true</code></pre>
   </div>
 
   <script>
+    let currentLiveToken = "";
+
+    async function fetchLiveToken() {
+      const btn = document.getElementById('btnFetchToken');
+      const badge = document.getElementById('tokenBadge');
+      const display = document.getElementById('tokenDisplay');
+      
+      btn.classList.add('loading');
+      btn.innerHTML = '<span>⏳ Token wird geholt...</span>';
+
+      try {
+        const res = await fetch('/oauth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: 'grant_type=client_credentials&client_id=btc-demo-client&client_secret=btc-demo-secret-2026'
+        });
+        const data = await res.json();
+        
+        if (data.access_token) {
+          currentLiveToken = data.access_token;
+          badge.classList.add('active');
+          badge.innerText = 'Gültig (' + data.expires_in + 's)';
+          display.innerText = currentLiveToken;
+          btn.innerHTML = '<span>✓ Neuer Token erteilt!</span>';
+          setTimeout(() => { btn.innerHTML = '<span>🔄 Token neu erzeugen</span>'; btn.classList.remove('loading'); }, 2000);
+
+          // Automatisch in alle cURL Blöcke einsetzen!
+          updateAllCurlTokens(currentLiveToken);
+        } else {
+          display.innerText = "Fehler: " + JSON.stringify(data);
+          btn.classList.remove('loading');
+          btn.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+        }
+      } catch (e) {
+        display.innerText = "Netzwerkfehler: " + e.message;
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+      }
+    }
+
+    function updateAllCurlTokens(token) {
+      // 1. REST
+      const restEl = document.getElementById('curlRestReading');
+      if (restEl) {
+        restEl.innerText = 'curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
+      }
+      // 2. OData v2 All
+      const odataV2All = document.getElementById('curlODataV2All');
+      if (odataV2All) {
+        odataV2All.innerText = 'curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet" \\\\\\n     -H "Accept: application/json" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
+      }
+      // 3. OData v2 Filter
+      const odataV2Filter = document.getElementById('curlODataV2Filter');
+      if (odataV2Filter) {
+        odataV2Filter.innerText = 'curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet?\\\\$filter=MeterId eq \\'DE-OL-MTR-001\\'" \\\\\\n     -H "Accept: application/json" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
+      }
+      // 4. OData v4 All
+      const odataV4All = document.getElementById('curlODataV4All');
+      if (odataV4All) {
+        odataV4All.innerText = 'curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\\\\\n     -H "Accept: application/json" \\\\\\n     -H "Authorization: Bearer ' + token + '"';
+      }
+      // 5. SOAP
+      const soapEl = document.getElementById('curlSoap');
+      if (soapEl) {
+        soapEl.innerText = 'curl -L -X POST "${hostUrl}/soap/utility" \\\\\\n     -H "Content-Type: text/xml; charset=utf-8" \\\\\\n     -H "SOAPAction: http://btc.de/energy/metering/soap/GetMeterReading" \\\\\\n     -H "Authorization: Bearer ' + token + '" \\\\\\n     -d \\'<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap">\\\\n   <soapenv:Header/>\\\\n   <soapenv:Body>\\\\n      <btc:GetMeterReadingRequest>\\\\n         <btc:MeterId>DE-OL-MTR-002</btc:MeterId>\\\\n      </btc:GetMeterReadingRequest>\\\\n   </soapenv:Body>\\\\n</soapenv:Envelope>\\';
+      }
+    }
+
+    function copyLiveToken(btn) {
+      if (!currentLiveToken) {
+        alert("Bitte hole zuerst über den blauen Knopf einen Token!");
+        return;
+      }
+      navigator.clipboard.writeText(currentLiveToken).then(() => {
+        btn.innerText = "✓ Kopiert!";
+        setTimeout(() => { btn.innerText = "Token kopieren"; }, 2000);
+      });
+    }
+
     function selectProtocol(protoId) {
       document.querySelectorAll('.protocol-card').forEach(c => c.classList.remove('selected'));
       document.querySelectorAll('.protocol-section').forEach(s => s.style.display = 'none');
