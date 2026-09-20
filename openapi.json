@@ -1,0 +1,222 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BTC Smart Meter Energy Services API",
+    "version": "1.0.0",
+    "description": "Enterprise Energy Service & Smart Meter Ingestion API für BTC Stadtwerke. Gesichert über OAuth 2.0 (Client Credentials & Refresh Token) sowie API Key."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Aktueller Host (Vercel / Localhost)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "OAuth2": {
+        "type": "oauth2",
+        "description": "Standard OAuth 2.0 Authentication",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "/oauth/token",
+            "scopes": {
+              "meter:read": "Lesezugriff auf Smart Meter Messdaten",
+              "meter:write": "Erfassen und Aktualisieren von Zählerständen"
+            }
+          }
+        }
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT / Opaque Token"
+      },
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "APIKey"
+      }
+    },
+    "schemas": {
+      "TokenRequest": {
+        "type": "object",
+        "required": ["grant_type"],
+        "properties": {
+          "grant_type": {
+            "type": "string",
+            "enum": ["client_credentials", "refresh_token"]
+          },
+          "client_id": {
+            "type": "string",
+            "example": "btc-demo-client"
+          },
+          "client_secret": {
+            "type": "string",
+            "example": "btc-demo-secret-2026"
+          },
+          "refresh_token": {
+            "type": "string",
+            "example": "btc-refresh-token-xyz-987"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "example": "btc-access-token-abc-123"
+          },
+          "token_type": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "example": 300,
+            "description": "Gültigkeit in Sekunden (300s / 5 Minuten für Demo-Refresh)"
+          },
+          "refresh_token": {
+            "type": "string",
+            "example": "btc-refresh-token-xyz-987"
+          },
+          "scope": {
+            "type": "string",
+            "example": "meter:read meter:write"
+          }
+        }
+      },
+      "MeterReading": {
+        "type": "object",
+        "required": ["meterId", "readingKWh"],
+        "properties": {
+          "meterId": {
+            "type": "string",
+            "example": "DE-OL-MTR-004"
+          },
+          "customer": {
+            "type": "string",
+            "example": "Klinikum Oldenburg"
+          },
+          "readingKWh": {
+            "type": "number",
+            "example": 54200.8
+          },
+          "tariff": {
+            "type": "string",
+            "example": "Gewerbe-Mittelspannung-Peak"
+          },
+          "status": {
+            "type": "string",
+            "example": "OK"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/oauth/token": {
+      "post": {
+        "summary": "OAuth 2.0 Token & Refresh Endpoint",
+        "description": "Gibt Access- und Refresh-Token aus. Unterstützt 'grant_type=client_credentials' und 'grant_type=refresh_token'.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            },
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token erfolgreich erteilt",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungültiger Request oder ungültiger Grant"
+          },
+          "401": {
+            "description": "Ungültige Client Credentials"
+          }
+        }
+      }
+    },
+    "/api/v1/smartmeters": {
+      "get": {
+        "summary": "Alle Zählerdaten abrufen (REST / OData Format)",
+        "security": [
+          { "BearerAuth": [] },
+          { "OAuth2": ["meter:read"] },
+          { "ApiKeyAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste aller Zählerstände",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "d": {
+                      "type": "object",
+                      "properties": {
+                        "results": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/MeterReading"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Nicht autorisiert (Token fehlt oder abgelaufen)"
+          }
+        }
+      },
+      "post": {
+        "summary": "Neuen Zählerstand einspielen (Smart Meter Ingestion)",
+        "security": [
+          { "BearerAuth": [] },
+          { "OAuth2": ["meter:write"] },
+          { "ApiKeyAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeterReading"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Zählerstand erfolgreich verbucht"
+          },
+          "401": {
+            "description": "Nicht autorisiert"
+          }
+        }
+      }
+    }
+  }
+}
