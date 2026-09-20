@@ -926,7 +926,7 @@ IntegrationCell.Include = true</code></pre>
           <h3>2. Gefilterte Abfrage ($filter) mit Bearer Token</h3>
           <div class="code-box">
             <div class="code-box-header"><span>GET mit $filter</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
-            <pre><code id="curlODataV2Filter">curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet?\$filter=MeterId eq 'DE-OL-MTR-001'" \\
+            <pre><code id="curlODataV2Filter">curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet?%24filter=MeterId%20eq%20%27DE-OL-MTR-001%27" \\
      -H "Accept: application/json" \\
      -H "Authorization: Bearer &lt;BITTE_OBEN_TOKEN_HOLEN&gt;"</code></pre>
           </div>
