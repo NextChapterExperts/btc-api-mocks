@@ -3,12 +3,12 @@
   "info": {
     "title": "BTC Smart Meter Energy Services API",
     "version": "1.0.0",
-    "description": "Enterprise Energy Service & Smart Meter Ingestion API für BTC Stadtwerke. Gesichert über OAuth 2.0 (Client Credentials & Refresh Token) sowie API Key."
+    "description": "Enterprise Energy Service & Smart Meter Ingestion API für BTC Stadtwerke. Gesichert über reines OAuth 2.0 (Client Credentials & Refresh Token)."
   },
   "servers": [
     {
       "url": "/",
-      "description": "Aktueller Host (Vercel / Localhost)"
+      "description": "Aktueller Host"
     }
   ],
   "components": {
@@ -30,11 +30,6 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT / Opaque Token"
-      },
-      "ApiKeyAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "APIKey"
       }
     },
     "schemas": {
@@ -159,8 +154,7 @@
         "summary": "Alle Zählerdaten abrufen (REST / OData Format)",
         "security": [
           { "BearerAuth": [] },
-          { "OAuth2": ["meter:read"] },
-          { "ApiKeyAuth": [] }
+          { "OAuth2": ["meter:read"] }
         ],
         "responses": {
           "200": {
@@ -187,7 +181,7 @@
             }
           },
           "401": {
-            "description": "Nicht autorisiert (Token fehlt oder abgelaufen)"
+            "description": "Nicht autorisiert (Bearer Token fehlt oder abgelaufen)"
           }
         }
       },
@@ -195,8 +189,7 @@
         "summary": "Neuen Zählerstand einspielen (Smart Meter Ingestion)",
         "security": [
           { "BearerAuth": [] },
-          { "OAuth2": ["meter:write"] },
-          { "ApiKeyAuth": [] }
+          { "OAuth2": ["meter:write"] }
         ],
         "requestBody": {
           "required": true,

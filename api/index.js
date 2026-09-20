@@ -22,7 +22,6 @@ try {
 const CONFIG = {
   validClientId: process.env.CLIENT_ID || 'btc-demo-client',
   validClientSecret: process.env.CLIENT_SECRET || 'btc-demo-secret-2026',
-  validTargetApiKey: process.env.API_KEY || 'DEMO_SECRET_TARGET_KEY_987654321',
   tokenExpiresInSeconds: 300 // 5 Minuten Lebensdauer für Live-Demonstration
 };
 
@@ -66,17 +65,15 @@ function generateToken(prefix) {
 // Helper: Robuste Host-URL Bestimmung (immer HTTPS auf Vercel / Cloud)
 function getBaseUrl(req) {
   const host = req.get('host');
-  // Wenn localhost, dann http, ansonsten immer https
   const protocol = host.includes('localhost') ? 'http' : 'https';
   return `${protocol}://${host}`;
 }
 
 // -------------------------------------------------------------
-// 1. OpenAPI Raw Endpoint & CDN-basierte Swagger UI (100% Serverless-kompatibel)
+// 1. OpenAPI Raw Endpoint & CDN-basierte Swagger UI
 // -------------------------------------------------------------
 app.get('/openapi.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
-  // Dynamische Server-URL für Swagger Try-It-Out
   const dynamicSpec = { ...openApiSpec, servers: [{ url: getBaseUrl(req) }] };
   res.json(dynamicSpec);
 });
@@ -229,19 +226,11 @@ app.post('/oauth/token', (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 3. Auth Middleware: Bearer Token oder Target API-Key Check
+// 3. Auth Middleware: Reiner OAuth 2.0 Bearer Token Check
 // -------------------------------------------------------------
 function authenticate(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const apiKeyHeader = req.headers['apikey'] || req.headers['x-api-key'] || req.headers['api-key'];
 
-  // 1. Check Target API Key (Direktaufruf am Backend)
-  if (apiKeyHeader && apiKeyHeader === CONFIG.validTargetApiKey) {
-    req.authMethod = 'TargetAPIKey';
-    return next();
-  }
-
-  // 2. Check Bearer Token (OAuth 2.0 Flow)
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.substring(7);
     if (tokenStore.has(token)) {
@@ -261,7 +250,7 @@ function authenticate(req, res, next) {
 
   return res.status(401).json({
     error: 'unauthorized',
-    error_description: 'Zugriff verweigert. Gültiger Bearer-Token (OAuth2) oder Target APIKey Header erforderlich.'
+    error_description: 'Zugriff verweigert. Gültiger OAuth 2.0 Bearer-Token erforderlich.'
   });
 }
 
@@ -301,7 +290,7 @@ app.post('/api/v1/smartmeters', authenticate, (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 5. Interaktives Dashboard mit Reitern (cURL & SAP Destination)
+// 5. Interaktives Dashboard mit Reitern
 // -------------------------------------------------------------
 app.get('/', (req, res) => {
   const hostUrl = getBaseUrl(req);
@@ -372,10 +361,10 @@ app.get('/', (req, res) => {
     
     .body-content { padding: 30px; }
     
-    /* Info Cards Grid */
+    /* Info Cards Grid: Ausschließlich OAuth2 & Developer Key */
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 16px;
       margin-bottom: 30px;
     }
@@ -388,6 +377,25 @@ app.get('/', (req, res) => {
     .info-card h4 { margin: 0 0 6px 0; color: #64748B; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
     .info-card code { font-size: 0.9rem; color: #0F172A; font-weight: bold; word-break: break-all; }
     .info-card p { margin: 4px 0 0 0; font-size: 0.75rem; color: #64748B; }
+
+    /* Interactive Developer Key Input Card */
+    .devkey-card {
+      background: #F0FDF4;
+      border: 2px solid #86EFAC;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .devkey-card h4 { margin: 0 0 6px 0; color: #166534; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
+    .devkey-input-row { display: flex; gap: 8px; margin-top: 8px; }
+    .devkey-input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #CBD5E1;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 0.85rem;
+    }
+    .devkey-input:focus { outline: none; border-color: #16A34A; }
 
     /* Tabs Navigation */
     .tabs-header {
@@ -485,7 +493,7 @@ app.get('/', (req, res) => {
     </div>
 
     <div class="body-content">
-      <!-- Info Cards Grid: Echte OAuth2 Daten -->
+      <!-- Info Cards Grid: Nur OAuth2 Daten + Developer Key Feld -->
       <div class="grid">
         <div class="info-card">
           <h4>OAuth2 Client ID</h4>
@@ -502,10 +510,14 @@ app.get('/', (req, res) => {
           <code>${hostUrl}/oauth/token</code>
           <p>POST-Endpunkt für Token & Refresh</p>
         </div>
-        <div class="info-card">
-          <h4>Backend Target API Key (Optional)</h4>
-          <code>DEMO_SECRET_TARGET_KEY_987654321</code>
-          <p>Nur für Szenario 1 (Direktzugriff ohne OAuth2)</p>
+        
+        <!-- Interaktives Developer Key Feld -->
+        <div class="devkey-card">
+          <h4>🔑 Developer Key (aus Developer Hub)</h4>
+          <p>Trage deinen Key aus dem Developer Hub hier ein, um die cURLs unten zu personalisieren:</p>
+          <div class="devkey-input-row">
+            <input type="text" id="devKeyInput" class="devkey-input" placeholder="DEIN_DEVELOPER_KEY_AUS_DEV_HUB" oninput="updateDevKey(this.value)" />
+          </div>
         </div>
       </div>
 
@@ -513,13 +525,13 @@ app.get('/', (req, res) => {
       <div class="tabs-header">
         <button class="tab-btn active" onclick="switchTab('curl')">💻 cURL & Terminal Aufrufe</button>
         <button class="tab-btn" onclick="switchTab('destination')">☁️ SAP BTP Destination Konfiguration</button>
-        <button class="tab-btn" onclick="switchTab('dual-key')">🔑 Erklärung: Developer Key vs. Target Key</button>
+        <button class="tab-btn" onclick="switchTab('developer-key-policy')">🛡️ Developer Key Konfiguration (Policy)</button>
       </div>
 
       <!-- TAB 1: cURL -->
       <div id="tab-curl" class="tab-pane active">
         <div class="note">
-          💡 <b>HTTPS erzwungen:</b> Alle Befehle nutzen <code>https://</code> und das Flag <code>-L</code> (Follow Redirects), damit es auf Vercel sofort klappt!
+          💡 <b>Direkter Backend-Test via OAuth2:</b> Holt den Token von der Schnittstelle und ruft die Zählerdaten ab.
         </div>
 
         <h3>1. Token abholen (OAuth 2.0 Client Credentials)</h3>
@@ -555,15 +567,15 @@ app.get('/', (req, res) => {
      -d "grant_type=refresh_token&refresh_token=&lt;REFRESH_TOKEN_HIER_EINSETZEN&gt;"</code></pre>
         </div>
 
-        <h3>4. Alternativer Direktaufruf mit Backend Target API Key</h3>
-        <p style="font-size: 0.9rem; color: #64748B;">Für den Test ohne OAuth (z. B. wenn APIM den Target-Key per AssignMessage injiziert):</p>
+        <h3>4. Integration Cell Ingress-Aufruf (mit personalisiertem Developer Key)</h3>
+        <p style="font-size: 0.9rem; color: #64748B;">So ruft der Konsument dein <b>API-Artefakt auf der Integration Cell</b> auf:</p>
         <div class="code-box">
           <div class="code-box-header">
-            <span>GET ${hostUrl}/api/v1/smartmeters (API-Key Auth)</span>
+            <span>GET &lt;INTEGRATION_CELL_URL&gt;/smartmeters</span>
             <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
           </div>
-          <pre><code>curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
-     -H "APIKey: DEMO_SECRET_TARGET_KEY_987654321"</code></pre>
+          <pre><code id="curlCellExample">curl -L -X GET "https://&lt;DEINE_INTEGRATION_CELL_RUNTIME_URL&gt;/api/v1/smartmeters" \\
+     -H "apikey: DEIN_DEVELOPER_KEY_AUS_DEV_HUB"</code></pre>
         </div>
       </div>
 
@@ -593,21 +605,28 @@ IntegrationCell.Include = true</code></pre>
         </div>
       </div>
 
-      <!-- TAB 3: Dual Key Erklärung -->
-      <div id="tab-dual-key" class="tab-pane">
+      <!-- TAB 3: Developer Key Konfiguration (Policy) -->
+      <div id="tab-developer-key-policy" class="tab-pane">
         <div class="note">
-          🧠 <b>Der Unterschied zwischen Developer Key und Target API Key:</b>
+          🛡️ <b>Developer Key Konfiguration in der Integration Cell:</b><br/>
+          Der Developer Key identifiziert den Anrufer an der Pforte der Integration Cell. Er wird gegen das Produkt-Abonnement im Developer Hub geprüft.
         </div>
-        
-        <p>In einer professionellen API-Gateway-Architektur gibt es zwei völlig getrennte Schlüssel:</p>
-        <ul>
-          <li><b>1. Der Developer Key (Ingress):</b><br/>
-              Wird im <b>SAP Developer Hub</b> an die App des Konsumenten vergeben. Er dient der <b>Identifikation des Anrufers, Quota-Überwachung und Traffic-Messung</b> an der Gateway-Pforte.</li>
-          <li><b>2. Der Target API Key / OAuth Token (Egress):</b><br/>
-              Ist das Geheimnis des <b>Zielsystems (dieser Mock-Server bzw. S/4HANA)</b>. Der Konsument darf diesen internen Schlüssel niemals kennen! Die Integration Cell terminiert den Developer Key und injiziert den Backend-Schlüssel oder das OAuth-Token.</li>
-        </ul>
 
-        <h3>Integration Cell Ingress Authorization Policy</h3>
+        <h3>1. Authentication Policy (Developer Key aus Header extrahieren)</h3>
+        <div class="code-box">
+          <div class="code-box-header">
+            <span>Policy: Authentication_ExtractDevKey.xml</span>
+            <button class="copy-btn" onclick="copyCode(this)">Kopieren</button>
+          </div>
+          <pre><code>&lt;Authentication async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
+    &lt;ExtractionPolicy&gt;
+        &lt;Source&gt;request&lt;/Source&gt;
+        &lt;Header name="apikey"/&gt;
+    &lt;/ExtractionPolicy&gt;
+&lt;/Authentication&gt;</code></pre>
+        </div>
+
+        <h3>2. Authorization Policy (Gegen Developer Hub validieren)</h3>
         <div class="code-box">
           <div class="code-box-header">
             <span>Policy: Authorization_ValidateDevHub.xml</span>
@@ -617,6 +636,7 @@ IntegrationCell.Include = true</code></pre>
     &lt;VerificationPolicy&gt;
         &lt;Type&gt;APIKey&lt;/Type&gt;
         &lt;Source&gt;request.header.apikey&lt;/Source&gt;
+        &lt;!-- Prüft die Gültigkeit des Schlüssels gegen die Developer Hub Application --&gt;
     &lt;/VerificationPolicy&gt;
 &lt;/Authorization&gt;</code></pre>
         </div>
@@ -648,6 +668,14 @@ IntegrationCell.Include = true</code></pre>
           btn.classList.remove('copied');
         }, 2000);
       });
+    }
+
+    function updateDevKey(val) {
+      const key = val.trim() || 'DEIN_DEVELOPER_KEY_AUS_DEV_HUB';
+      const codeBlock = document.getElementById('curlCellExample');
+      if (codeBlock) {
+        codeBlock.innerText = 'curl -L -X GET "https://<DEINE_INTEGRATION_CELL_RUNTIME_URL>/api/v1/smartmeters" \\\\\\n     -H "apikey: ' + key + '"';
+      }
     }
   </script>
 </body>
