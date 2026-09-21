@@ -1192,23 +1192,22 @@ app.get('/', (req, res) => {
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <a href="/docs" target="_blank" class="btn-link" style="background:#0284C7;">📖 Swagger UI öffnen</a>
               <a href="/openapi.json" target="_blank" class="btn-link">📜 OpenAPI 3.0 Spec</a>
-              <button class="btn-token" style="background:#0D9488; padding:5px 12px; font-size:0.8rem;" onclick="invokeMockLive('rest')">🚀 Live im Browser testen</button>
             </div>
           </div>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">🔌 1. Endpunkte & URLs</button>
+          <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">🌐 1. Endpunkte & URLs</button>
           <button class="tab-btn" onclick="switchInnerTab('rest', 'dest')">⚙️ 2. BTP Destination</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'apim')">🛡️ 3. APIM Ingress Proxy</button>
-          <button class="tab-btn" onclick="switchInnerTab('rest', 'policy')">📜 4. Policies (XML)</button>
+          <button class="tab-btn" onclick="switchInnerTab('rest', 'arch')">🏛️ 3. Architektur & Policies</button>
         </div>
 
         <!-- TAB 1: Endpunkte & URLs -->
         <div id="rest-direct" class="tab-pane active">
-          <p style="font-size:0.88rem; color:#475569; margin-bottom:12px;">
-            Verwende diese direkten URLs für Postman, eigene Clients oder als Backend-Target in SAP API Management:
-          </p>
+          <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span>💡 <b>Tipp für SAP BTP / APIM:</b> Für automatischen Token-Refresh und Header-Injection konfiguriere die zentrale BTP Destination <b>BTC_UTILITY_MOCK_API</b>.</span>
+            <button class="btn-sm-action primary" onclick="switchInnerTab('rest', 'dest')">⚙️ Zu BTP Destination &rarr;</button>
+          </div>
 
           <!-- Card 1: Token Endpoint -->
           <div class="endpoint-card">
@@ -1243,9 +1242,6 @@ app.get('/', (req, res) => {
               <div class="endpoint-title">
                 <span class="method-badge badge-get">GET</span>
                 <span>Zählerdaten abrufen (Smart Meter Ingestion List)</span>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-sm-action primary" onclick="invokeMockLive('rest')">🚀 Nativ im Browser aufrufen</button>
               </div>
             </div>
             <div class="url-display-bar">
@@ -1306,52 +1302,97 @@ IntegrationCell.Include = true</code></pre>
           </ol>
         </div>
 
-        <!-- TAB 3: APIM Ingress Proxy -->
-        <div id="rest-apim" class="tab-pane">
-          <div class="apim-cockpit-box">
-            <h4>🛡️ APIM Ingress Proxy Konfiguration</h4>
-            <div class="apim-cockpit-grid">
-              <div class="apim-field">
-                <label for="apimHost_rest">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
-                <input type="text" id="apimHost_rest" value="https://<DEIN_APIM_HOST>" oninput="syncApimInputs(this.value, null)" />
-              </div>
-              <div class="apim-field">
-                <label for="apimKey_rest">🔑 Dein Developer Key (aus dem Developer Hub):</label>
-                <input type="text" id="apimKey_rest" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
-              </div>
+        <!-- TAB 3: Architektur & Policies -->
+        <div id="rest-arch" class="tab-pane">
+          <!-- Architecture SVG Blueprint -->
+          <div style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:8px; padding:16px; margin-bottom:18px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+            <div style="font-size:0.85rem; font-weight:700; color:#0F172A; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+              <span>🏛️ End-to-End Referenzarchitektur: SAP Integration Suite &amp; API Management</span>
             </div>
-            <div class="apim-hint">
-              💡 <b>Enterprise Shield Pattern:</b> Der Konsument ruft ausschließlich den APIM Proxy auf und authentifiziert sich per <code>apikey</code> (Developer Key). Das Mock-Backend sieht diesen Key nie – APIM prüft den Key via PreFlow Policy und injiziert das Backend-OAuth2-Token!
-            </div>
+            <svg viewBox="0 0 880 220" width="100%" height="auto" style="max-width:880px; display:block; margin:0 auto; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+              <defs>
+                <linearGradient id="gradClient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#EFF6FF" />
+                  <stop offset="100%" stop-color="#DBEAFE" />
+                </linearGradient>
+                <linearGradient id="gradApim1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#F5F3FF" />
+                  <stop offset="100%" stop-color="#EDE9FE" />
+                </linearGradient>
+                <linearGradient id="gradBackend1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ECFDF5" />
+                  <stop offset="100%" stop-color="#D1FAE5" />
+                </linearGradient>
+                <marker id="arrow1" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#475569" />
+                </marker>
+              </defs>
+
+              <!-- Zone 1: Consumer -->
+              <rect x="10" y="15" width="220" height="185" rx="8" fill="url(#gradClient1)" stroke="#93C5FD" stroke-width="1.5" />
+              <text x="25" y="40" font-size="13" font-weight="700" fill="#1E3A8A">1. Konsument / Client</text>
+              <rect x="25" y="52" width="190" height="38" rx="6" fill="#FFFFFF" stroke="#BFDBFE" />
+              <text x="35" y="72" font-size="11" font-weight="600" fill="#1E293B">Apps / Web / Smart Meter</text>
+              <text x="35" y="84" font-size="9" fill="#64748B">Joule AI / MaKo Gateway</text>
+
+              <rect x="25" y="100" width="190" height="42" rx="6" fill="#EFF6FF" stroke="#93C5FD" stroke-dasharray="3 3" />
+              <text x="35" y="117" font-size="10.5" font-weight="700" fill="#1D4ED8">🔑 Client Authentifizierung</text>
+              <text x="35" y="132" font-size="10" font-family="monospace" fill="#0F172A">Header: apikey &lt;DevKey&gt;</text>
+              <text x="25" y="165" font-size="9.5" fill="#64748B">• Kein Backend-Token nötig</text>
+              <text x="25" y="180" font-size="9.5" fill="#64748B">• Validierung am API-Gateway</text>
+
+              <!-- Arrow 1 -> 2 -->
+              <path d="M 230 110 L 290 110" stroke="#475569" stroke-width="2" marker-end="url(#arrow1)" />
+              <text x="235" y="100" font-size="9" font-weight="600" fill="#475569">HTTPS / apikey</text>
+
+              <!-- Zone 2: SAP APIM & Integration Cell -->
+              <rect x="300" y="10" width="280" height="195" rx="8" fill="url(#gradApim1)" stroke="#C4B5FD" stroke-width="1.5" />
+              <text x="315" y="32" font-size="13" font-weight="700" fill="#5B21B6">2. SAP BTP Integration Suite</text>
+              <text x="315" y="47" font-size="9.5" font-weight="600" fill="#7C3AED">API Management &amp; Integration Cell</text>
+
+              <rect x="315" y="58" width="250" height="42" rx="6" fill="#FFFFFF" stroke="#DDD6FE" />
+              <text x="325" y="75" font-size="11" font-weight="700" fill="#6D28D9">🛡️ Ingress Proxy &amp; Policies</text>
+              <text x="325" y="90" font-size="9.5" fill="#4B5563">VerifyAPIKey (Developer Hub Prüfung)</text>
+
+              <rect x="315" y="108" width="250" height="48" rx="6" fill="#FFFFFF" stroke="#DDD6FE" />
+              <text x="325" y="125" font-size="11" font-weight="700" fill="#6D28D9">⚙️ Destination Service</text>
+              <text x="325" y="139" font-size="10" font-family="monospace" fill="#0F172A">BTC_UTILITY_MOCK_API</text>
+              <text x="325" y="150" font-size="8.5" fill="#6B7280">OAuth2 Client Credentials Auto-Injection</text>
+
+              <text x="315" y="180" font-size="9.5" fill="#5B21B6">✓ K8s Edge Pods &amp; Istio Envoy Gateway</text>
+
+              <!-- Arrow 2 -> 3 -->
+              <path d="M 580 132 L 640 132" stroke="#475569" stroke-width="2" marker-end="url(#arrow1)" />
+              <text x="583" y="122" font-size="9" font-weight="600" fill="#065F46">OAuth Bearer</text>
+
+              <!-- Zone 3: Mock Backend Provider -->
+              <rect x="650" y="15" width="220" height="185" rx="8" fill="url(#gradBackend1)" stroke="#6EE7B7" stroke-width="1.5" />
+              <text x="665" y="40" font-size="13" font-weight="700" fill="#065F46">3. BTC Mock Backend</text>
+              <text x="665" y="53" font-size="9.5" fill="#047857">Vercel Serverless Platform</text>
+
+              <rect x="665" y="65" width="190" height="38" rx="6" fill="#FFFFFF" stroke="#A7F3D0" />
+              <text x="675" y="82" font-size="10.5" font-weight="700" fill="#047857">🔐 Auth Server (/oauth/token)</text>
+              <text x="675" y="94" font-size="9" fill="#64748B">Client Credentials (btc-demo-client)</text>
+
+              <rect x="665" y="112" width="190" height="52" rx="6" fill="#FFFFFF" stroke="#A7F3D0" />
+              <text x="675" y="130" font-size="10.5" font-weight="700" fill="#047857">⚡ Protected Resources</text>
+              <text x="675" y="144" font-size="9" fill="#334155">• REST / OData v2/v4 / SOAP</text>
+              <text x="675" y="156" font-size="9" fill="#334155">• IS-U Zählerstände (15-Min-Takt)</text>
+
+              <text x="665" y="184" font-size="9.5" fill="#065F46">✓ BSI C5 / KRITIS entkoppelt</text>
+            </svg>
           </div>
 
-          <div class="endpoint-card" style="margin-top:16px;">
-            <div class="endpoint-header-row">
-              <div class="endpoint-title">
-                <span class="method-badge badge-get">GET</span>
-                <span>APIM Ingress Route (Konsumenten-Aufruf)</span>
-              </div>
-            </div>
-            <div class="url-display-bar">
-              <span id="apimDisplayRestUrl" class="url-display-text">https://&lt;DEIN_APIM_HOST&gt;/api/v1/smartmeters</span>
-              <button class="copy-btn" onclick="copyApimUrl('/api/v1/smartmeters', this)">URL kopieren</button>
-            </div>
-            <div class="endpoint-meta">
-              <span><b>Erforderlicher Header:</b></span>
-              <span id="apimDisplayRestHeader" class="meta-tag">apikey: DEIN_DEVELOPER_KEY</span>
-              <button class="btn-sm-action" onclick="copyApimKeyHeader(this)">Header kopieren</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: Policy XML -->
-        <div id="rest-policy" class="tab-pane">
+          <!-- Implementation Specifics -->
           <div class="note">
-            <b>Policy: Ingress Developer Key Validierung</b><br/>
-            Füge diese Policy im <i>ProxyEndpoint PreFlow</i> ein, um den Developer Key aus dem Developer Hub zu erzwingen.
+            <b>Implementierungs-Spezifika für REST:</b><br/>
+            • <b>OpenAPI-Import:</b> Das API Portal parst <code>/openapi.json</code> und erzeugt automatisch alle Pfade (<code>/api/v1/smartmeters</code>).<br/>
+            • <b>Enterprise Shield:</b> Konsumenten nutzen ausschließlich ihren <b>Developer Key</b> (Header <code>apikey</code>). APIM tauscht den Key über die BTP Destination gegen den Backend-OAuth2-Token aus.<br/>
+            • <b>Data Pruning (Stand 2026-09-14):</b> Filterung und Projektion für KI-Agenten / Joule gehören in das API-Artefakt bzw. den iFlow darunter, da MCP-Server-Artefakte auf der Integration Cell keine Mediation-Steps unterstützen!
           </div>
+
           <div class="code-box">
-            <div class="code-box-header"><span>Policy: VerifyAPIKey_DevHub.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_DevHub.xml (ProxyEndpoint PreFlow)</span><button class="copy-btn" onclick="copyCode(this)">Policy kopieren</button></div>
             <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
     &lt;APIKey ref="request.header.apikey"/&gt;
 &lt;/VerifyAPIKey&gt;</code></pre>
@@ -1371,23 +1412,22 @@ IntegrationCell.Include = true</code></pre>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link" style="background:#0284C7;">📜 $metadata XML ansehen</a>
-              <button class="btn-token" style="background:#0D9488; padding:5px 12px; font-size:0.8rem;" onclick="invokeMockLive('odata-v2')">🚀 Live im Browser testen</button>
             </div>
           </div>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">🔌 1. Endpunkte & URLs</button>
+          <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">🌐 1. Endpunkte & URLs</button>
           <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'dest')">⚙️ 2. BTP Destination</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'apim')">🛡️ 3. APIM Ingress Proxy</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'policy')">📜 4. Policies (XML)</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'arch')">🏛️ 3. Architektur & Policies</button>
         </div>
 
         <!-- TAB 1: Endpunkte & URLs -->
         <div id="odata-v2-direct" class="tab-pane active">
-          <p style="font-size:0.88rem; color:#475569; margin-bottom:12px;">
-            OData v2 Service-Endpunkte für den direkten Zugriff und die Auto-Proxy Generierung in SAP BTP:
-          </p>
+          <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span>💡 <b>Tipp für OData Auto-Proxy:</b> Gib im SAP API Portal einfach die <b>$metadata URL</b> ein – APIM liest alle EntitySets (<code>MeterReadingSet</code>) automatisch ein!</span>
+            <button class="btn-sm-action primary" onclick="switchInnerTab('odata-v2', 'dest')">⚙️ Zu BTP Destination &rarr;</button>
+          </div>
 
           <!-- Card 1: $metadata -->
           <div class="endpoint-card">
@@ -1415,9 +1455,6 @@ IntegrationCell.Include = true</code></pre>
               <div class="endpoint-title">
                 <span class="method-badge badge-get">GET</span>
                 <span>EntitySet: Alle Zählerstände (/odata/v2/utility/MeterReadingSet)</span>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-sm-action primary" onclick="invokeMockLive('odata-v2')">🚀 Nativ im Browser aufrufen</button>
               </div>
             </div>
             <div class="url-display-bar">
@@ -1479,53 +1516,16 @@ IntegrationCell.Include = true</code></pre>
           </ol>
         </div>
 
-        <!-- TAB 3: APIM Ingress Proxy -->
-        <div id="odata-v2-apim" class="tab-pane">
-          <div class="apim-cockpit-box">
-            <h4>🛡️ APIM Ingress Proxy Konfiguration</h4>
-            <div class="apim-cockpit-grid">
-              <div class="apim-field">
-                <label for="apimHost_odata-v2">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
-                <input type="text" id="apimHost_odata-v2" value="https://<DEIN_APIM_HOST>" oninput="syncApimInputs(this.value, null)" />
-              </div>
-              <div class="apim-field">
-                <label for="apimKey_odata-v2">🔑 Dein Developer Key (aus dem Developer Hub):</label>
-                <input type="text" id="apimKey_odata-v2" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
-              </div>
-            </div>
-            <div class="apim-hint">
-              💡 <b>Didaktischer Merksatz:</b> Der Konsument ruft ausschließlich den APIM Proxy auf und authentifiziert sich per <code>apikey</code> (Developer Key).
-            </div>
-          </div>
-
-          <div class="endpoint-card" style="margin-top:16px;">
-            <div class="endpoint-header-row">
-              <div class="endpoint-title">
-                <span class="method-badge badge-get">GET</span>
-                <span>APIM Ingress Route: OData v2 EntitySet</span>
-              </div>
-            </div>
-            <div class="url-display-bar">
-              <span id="apimDisplayODataV2Url" class="url-display-text">https://&lt;DEIN_APIM_HOST&gt;/odata/v2/utility/MeterReadingSet</span>
-              <button class="copy-btn" onclick="copyApimUrl('/odata/v2/utility/MeterReadingSet', this)">URL kopieren</button>
-            </div>
-            <div class="endpoint-meta">
-              <span><b>Header:</b></span>
-              <span id="apimDisplayODataV2Header" class="meta-tag">apikey: DEIN_DEVELOPER_KEY</span>
-              <button class="btn-sm-action" onclick="copyApimKeyHeader(this)">Header kopieren</button>
-              <span class="meta-tag" style="margin-left:8px;">Accept: application/json</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: Policy XML -->
-        <div id="odata-v2-policy" class="tab-pane">
+        <!-- TAB 3: Architektur & Policies -->
+        <div id="odata-v2-arch" class="tab-pane">
           <div class="note">
-            <b>Policy: OData Schema Validation & DevKey</b><br/>
-            Schützt die OData-Schnittstelle vor bösartigen Abfragen und erzwingt den Developer Hub Key.
+            <b>OData v2 Implementierungs-Architektur:</b><br/>
+            • <b>Auto-Proxy Generierung:</b> Im Gegensatz zu reinem REST liest SAP APIM über das EDMX <code>$metadata</code>-Dokument alle Entitäten, Navigationen und Datentypen vollautomatisch ein.<br/>
+            • <b>OData Schema Validation:</b> Die Policy schützt vor fehlerhaften Abfragen, Injections und übermäßigen <code>$expand</code>-Tiefen.<br/>
+            • <b>Developer Hub Absicherung:</b> Externe Konsumenten authentifizieren sich per Header <code>apikey</code>.
           </div>
           <div class="code-box">
-            <div class="code-box-header"><span>Policy: VerifyAPIKey_DevHub.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_DevHub.xml</span><button class="copy-btn" onclick="copyCode(this)">Policy kopieren</button></div>
             <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
     &lt;APIKey ref="request.header.apikey"/&gt;
 &lt;/VerifyAPIKey&gt;</code></pre>
@@ -1545,23 +1545,22 @@ IntegrationCell.Include = true</code></pre>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link" style="background:#0284C7;">📜 OData v4 $metadata XML</a>
-              <button class="btn-token" style="background:#0D9488; padding:5px 12px; font-size:0.8rem;" onclick="invokeMockLive('odata-v4')">🚀 Live im Browser testen</button>
             </div>
           </div>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">🔌 1. Endpunkte & URLs</button>
+          <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">🌐 1. Endpunkte & URLs</button>
           <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'dest')">⚙️ 2. BTP Destination</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'apim')">🛡️ 3. APIM Ingress Proxy</button>
-          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'policy')">📜 4. Policies (XML)</button>
+          <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'arch')">🏛️ 3. Architektur & Policies</button>
         </div>
 
         <!-- TAB 1: Endpunkte & URLs -->
         <div id="odata-v4-direct" class="tab-pane active">
-          <p style="font-size:0.88rem; color:#475569; margin-bottom:12px;">
-            OData v4 Service-Endpunkte nach aktuellem OASIS Standard:
-          </p>
+          <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span>💡 <b>OASIS OData v4:</b> Flache JSON-Payload mit <code>@odata.context</code> und <code>value</code>-Array für optimierte Cloud-Verarbeitung.</span>
+            <button class="btn-sm-action primary" onclick="switchInnerTab('odata-v4', 'dest')">⚙️ Zu BTP Destination &rarr;</button>
+          </div>
 
           <!-- Card 1: $metadata -->
           <div class="endpoint-card">
@@ -1586,9 +1585,6 @@ IntegrationCell.Include = true</code></pre>
               <div class="endpoint-title">
                 <span class="method-badge badge-get">GET</span>
                 <span>EntitySet: MeterReadings (/odata/v4/utility/MeterReadings)</span>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-sm-action primary" onclick="invokeMockLive('odata-v4')">🚀 Nativ im Browser aufrufen</button>
               </div>
             </div>
             <div class="url-display-bar">
@@ -1624,49 +1620,15 @@ IntegrationCell.Include = true</code></pre>
           </div>
         </div>
 
-        <!-- TAB 3: APIM Ingress Proxy -->
-        <div id="odata-v4-apim" class="tab-pane">
-          <div class="apim-cockpit-box">
-            <h4>🛡️ APIM Ingress Proxy Konfiguration</h4>
-            <div class="apim-cockpit-grid">
-              <div class="apim-field">
-                <label for="apimHost_odata-v4">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
-                <input type="text" id="apimHost_odata-v4" value="https://<DEIN_APIM_HOST>" oninput="syncApimInputs(this.value, null)" />
-              </div>
-              <div class="apim-field">
-                <label for="apimKey_odata-v4">🔑 Dein Developer Key (aus dem Developer Hub):</label>
-                <input type="text" id="apimKey_odata-v4" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
-              </div>
-            </div>
-            <div class="apim-hint">
-              💡 OData v4 Abfrage über APIM mit Header <code>apikey</code>.
-            </div>
+        <!-- TAB 3: Architektur & Policies -->
+        <div id="odata-v4-arch" class="tab-pane">
+          <div class="note">
+            <b>OData v4 RAP / CAP Implementierungs-Architektur:</b><br/>
+            • <b>Moderne Architektur:</b> Entspricht den Standards moderner SAP RAP (ABAP RESTful Application Programming Model) und CAP (Cloud Application Programming Model) Services.<br/>
+            • <b>Effiziente Token-Ökonomie:</b> Durch die flachere JSON-Struktur spart OData v4 ca. 25–35% Token im Vergleich zu OData v2 XML/JSON ein, wenn Daten an LLM-Agenten übergeben werden.
           </div>
-
-          <div class="endpoint-card" style="margin-top:16px;">
-            <div class="endpoint-header-row">
-              <div class="endpoint-title">
-                <span class="method-badge badge-get">GET</span>
-                <span>APIM Ingress Route: OData v4 EntitySet</span>
-              </div>
-            </div>
-            <div class="url-display-bar">
-              <span id="apimDisplayODataV4Url" class="url-display-text">https://&lt;DEIN_APIM_HOST&gt;/odata/v4/utility/MeterReadings</span>
-              <button class="copy-btn" onclick="copyApimUrl('/odata/v4/utility/MeterReadings', this)">URL kopieren</button>
-            </div>
-            <div class="endpoint-meta">
-              <span><b>Header:</b></span>
-              <span id="apimDisplayODataV4Header" class="meta-tag">apikey: DEIN_DEVELOPER_KEY</span>
-              <button class="btn-sm-action" onclick="copyApimKeyHeader(this)">Header kopieren</button>
-              <span class="meta-tag" style="margin-left:8px;">Accept: application/json</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: Policy XML -->
-        <div id="odata-v4-policy" class="tab-pane">
           <div class="code-box">
-            <div class="code-box-header"><span>Policy: VerifyAPIKey_ODataV4.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_ODataV4.xml</span><button class="copy-btn" onclick="copyCode(this)">Policy kopieren</button></div>
             <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
     &lt;APIKey ref="request.header.apikey"/&gt;
 &lt;/VerifyAPIKey&gt;</code></pre>
@@ -1686,23 +1648,22 @@ IntegrationCell.Include = true</code></pre>
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <a href="/soap/utility?wsdl" target="_blank" class="btn-link" style="background:#0284C7;">📜 WSDL ansehen / herunterladen</a>
-              <button class="btn-token" style="background:#0D9488; padding:5px 12px; font-size:0.8rem;" onclick="invokeMockLive('soap')">🚀 Live im Browser testen</button>
             </div>
           </div>
         </div>
 
         <div class="tabs-header">
-          <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">🔌 1. Endpunkte & URLs</button>
+          <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">🌐 1. Endpunkte & URLs</button>
           <button class="tab-btn" onclick="switchInnerTab('soap', 'dest')">⚙️ 2. BTP Destination</button>
-          <button class="tab-btn" onclick="switchInnerTab('soap', 'apim')">🛡️ 3. APIM Ingress Proxy</button>
-          <button class="tab-btn" onclick="switchInnerTab('soap', 'policy')">📜 4. Policies (XML)</button>
+          <button class="tab-btn" onclick="switchInnerTab('soap', 'arch')">🏛️ 3. Architektur & Policies</button>
         </div>
 
         <!-- TAB 1: Endpunkte & URLs -->
         <div id="soap-direct" class="tab-pane active">
-          <p style="font-size:0.88rem; color:#475569; margin-bottom:12px;">
-            SOAP 1.1 Endpunkte und XML Payload für Web Service Aufrufe:
-          </p>
+          <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:10px 14px; margin-bottom:14px; font-size:0.83rem; color:#166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <span>💡 <b>WSDL Service Contract:</b> Importiere <code>${hostUrl}/soap/utility?wsdl</code> im API Portal, um Operationen wie <code>GetMeterReading</code> automatisch als Route zu generieren.</span>
+            <button class="btn-sm-action primary" onclick="switchInnerTab('soap', 'dest')">⚙️ Zu BTP Destination &rarr;</button>
+          </div>
 
           <!-- Card 1: WSDL -->
           <div class="endpoint-card">
@@ -1727,9 +1688,6 @@ IntegrationCell.Include = true</code></pre>
               <div class="endpoint-title">
                 <span class="method-badge badge-post">POST</span>
                 <span>SOAP Endpoint (/soap/utility) - Operation: GetMeterReading</span>
-              </div>
-              <div style="display:flex; gap:6px;">
-                <button class="btn-sm-action primary" onclick="invokeMockLive('soap')">🚀 Nativ im Browser aufrufen</button>
               </div>
             </div>
             <div class="url-display-bar">
@@ -1798,49 +1756,15 @@ IntegrationCell.Include = true</code></pre>
           </ol>
         </div>
 
-        <!-- TAB 3: APIM Ingress Proxy -->
-        <div id="soap-apim" class="tab-pane">
-          <div class="apim-cockpit-box">
-            <h4>🛡️ APIM Ingress Proxy Konfiguration</h4>
-            <div class="apim-cockpit-grid">
-              <div class="apim-field">
-                <label for="apimHost_soap">🌐 Deine SAP APIM / Integration Cell Host-URL:</label>
-                <input type="text" id="apimHost_soap" value="https://<DEIN_APIM_HOST>" oninput="syncApimInputs(this.value, null)" />
-              </div>
-              <div class="apim-field">
-                <label for="apimKey_soap">🔑 Dein Developer Key (aus dem Developer Hub):</label>
-                <input type="text" id="apimKey_soap" value="DEIN_DEVELOPER_KEY" oninput="syncApimInputs(null, this.value)" />
-              </div>
-            </div>
-            <div class="apim-hint">
-              💡 Der Konsument schickt den Developer Key im Header <code>apikey</code> an den APIM SOAP-Proxy.
-            </div>
+        <!-- TAB 3: Architektur & Policies -->
+        <div id="soap-arch" class="tab-pane">
+          <div class="note">
+            <b>Legacy SOAP Mediation Architektur:</b><br/>
+            • <b>WSDL-to-REST Transformation:</b> APIM kann alte SOAP 1.1 Web Services modernisieren, indem XML-Payloads per <code>XMLtoJSON</code> und <code>JSONtoXML</code> Policies on-the-fly gewandelt werden.<br/>
+            • <b>Legacy Schutz:</b> Das Backend verlangt strikt den SOAP-Envelope und die <code>SOAPAction</code>. APIM schirmt diese Altsysteme vor Überlastung ab.
           </div>
-
-          <div class="endpoint-card" style="margin-top:16px;">
-            <div class="endpoint-header-row">
-              <div class="endpoint-title">
-                <span class="method-badge badge-post">POST</span>
-                <span>APIM Ingress Route: SOAP Proxy</span>
-              </div>
-            </div>
-            <div class="url-display-bar">
-              <span id="apimDisplaySoapUrl" class="url-display-text">https://&lt;DEIN_APIM_HOST&gt;/soap/utility</span>
-              <button class="copy-btn" onclick="copyApimUrl('/soap/utility', this)">URL kopieren</button>
-            </div>
-            <div class="endpoint-meta">
-              <span><b>Header:</b></span>
-              <span id="apimDisplaySoapHeader" class="meta-tag">apikey: DEIN_DEVELOPER_KEY</span>
-              <button class="btn-sm-action" onclick="copyApimKeyHeader(this)">Header kopieren</button>
-              <span class="meta-tag" style="margin-left:8px;">SOAPAction: http://btc.de/energy/metering/soap/GetMeterReading</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- TAB 4: Policy XML -->
-        <div id="soap-policy" class="tab-pane">
           <div class="code-box">
-            <div class="code-box-header"><span>Policy: VerifyAPIKey_SOAP.xml</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+            <div class="code-box-header"><span>Policy: VerifyAPIKey_SOAP.xml</span><button class="copy-btn" onclick="copyCode(this)">Policy kopieren</button></div>
             <pre><code>&lt;VerifyAPIKey async="false" continueOnError="false" enabled="true" xmlns="http://www.sap.com/apimgmt"&gt;
     &lt;APIKey ref="request.header.apikey"/&gt;
 &lt;/VerifyAPIKey&gt;</code></pre>
@@ -2393,69 +2317,9 @@ IntegrationCell.Include = true</code></pre>
       copyToClipboard(pre.innerText, btn);
     }
 
-    let globalApimHost = "https://<DEIN_APIM_HOST>";
-    let globalApimKey = "DEIN_DEVELOPER_KEY";
-
-    function syncApimInputs(hostVal, keyVal) {
-      if (hostVal !== null && hostVal !== undefined) {
-        globalApimHost = hostVal.trim() || 'https://<DEIN_APIM_HOST>';
-        if (globalApimHost.endsWith('/')) {
-          globalApimHost = globalApimHost.slice(0, -1);
-        }
-        ['rest', 'odata-v2', 'odata-v4', 'soap'].forEach(p => {
-          const inp = document.getElementById('apimHost_' + p);
-          if (inp && inp !== document.activeElement) inp.value = globalApimHost;
-        });
-      }
-
-      if (keyVal !== null && keyVal !== undefined) {
-        globalApimKey = keyVal.trim() || 'DEIN_DEVELOPER_KEY';
-        ['rest', 'odata-v2', 'odata-v4', 'soap'].forEach(p => {
-          const inp = document.getElementById('apimKey_' + p);
-          if (inp && inp !== document.activeElement) inp.value = globalApimKey;
-        });
-      }
-
-      updateApimDisplayElements();
-    }
-
     function copyCurrentAuthHeader(btn) {
       const token = currentLiveToken || '<BITTE_OBEN_MOCK_TOKEN_HOLEN>';
       copyToClipboard('Authorization: Bearer ' + token, btn);
-    }
-
-    function copyApimUrl(path, btn) {
-      copyToClipboard(globalApimHost + path, btn);
-    }
-
-    function copyApimKeyHeader(btn) {
-      copyToClipboard('apikey: ' + globalApimKey, btn);
-    }
-
-    function updateApimDisplayElements() {
-      const restUrl = document.getElementById('apimDisplayRestUrl');
-      if (restUrl) restUrl.innerText = globalApimHost + '/api/v1/smartmeters';
-
-      const restHeader = document.getElementById('apimDisplayRestHeader');
-      if (restHeader) restHeader.innerText = 'apikey: ' + globalApimKey;
-
-      const odataV2Url = document.getElementById('apimDisplayODataV2Url');
-      if (odataV2Url) odataV2Url.innerText = globalApimHost + '/odata/v2/utility/MeterReadingSet';
-
-      const odataV2Header = document.getElementById('apimDisplayODataV2Header');
-      if (odataV2Header) odataV2Header.innerText = 'apikey: ' + globalApimKey;
-
-      const odataV4Url = document.getElementById('apimDisplayODataV4Url');
-      if (odataV4Url) odataV4Url.innerText = globalApimHost + '/odata/v4/utility/MeterReadings';
-
-      const odataV4Header = document.getElementById('apimDisplayODataV4Header');
-      if (odataV4Header) odataV4Header.innerText = 'apikey: ' + globalApimKey;
-
-      const soapUrl = document.getElementById('apimDisplaySoapUrl');
-      if (soapUrl) soapUrl.innerText = globalApimHost + '/soap/utility';
-
-      const soapHeader = document.getElementById('apimDisplaySoapHeader');
-      if (soapHeader) soapHeader.innerText = 'apikey: ' + globalApimKey;
     }
   </script>
 </body>
