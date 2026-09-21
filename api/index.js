@@ -1016,25 +1016,57 @@ app.get('/', (req, res) => {
 
     <div class="body-content">
 
-      <!-- OBERER BEREICH: REINES SCHNITTSTELLEN-MOCK COCKPIT -->
-      <div class="token-generator-box">
-        <div class="token-header-row">
+      <!-- OBERER BEREICH: INTERAKTIVES MOCK-SCHNITTSTELLEN LIVE-COCKPIT -->
+      <div class="token-generator-box" style="background:#FFFFFF; border:1px solid #10B981; border-radius:10px; padding:18px 20px; box-shadow:0 2px 8px rgba(16,185,129,0.08);">
+        <div class="token-header-row" style="margin-bottom:10px;">
           <div>
-            <h4 style="margin:0 0 4px 0;">🔐 1. Backend-Mock Authentifizierung (Provider Token)</h4>
-            <div style="font-size:0.8rem; color:#64748B;">Authentifizierung für den direkten Aufruf des Mock-Backends (Client Credentials Flow mit <code>client_id=btc-demo-client</code>)</div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:0.72rem; font-weight:700; color:#065F46; background:#D1FAE5; padding:3px 8px; border-radius:4px;">
+                MOCK BACKEND PROVIDER
+              </span>
+              <h4 style="margin:0; font-size:1.1rem; color:#065F46;">
+                🔐 1. Backend-Mock Live-Test & Provider-Token Cockpit
+              </h4>
+            </div>
+            <div style="font-size:0.82rem; color:#64748B; margin-top:4px;">
+              Keine Terminal-Konsole erforderlich: Hole das Provider-Token und teste die 4 Schnittstellen direkt nativ per Klick!
+            </div>
           </div>
-          <div>
+
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+            <select id="mockEndpointSelect" style="padding:7px 10px; border:1px solid #CBD5E1; border-radius:6px; font-size:0.82rem; font-weight:600; color:#1E293B; background:#F8FAFC;" onchange="onMockEndpointChange(this.value)">
+              <option value="rest">1. REST API (/api/v1/smartmeters)</option>
+              <option value="odata-v2">2. SAP OData v2 (/odata/v2/utility/MeterReadingSet)</option>
+              <option value="odata-v4">3. SAP OData v4 (/odata/v4/utility/MeterReadings)</option>
+              <option value="soap">4. Legacy SOAP (/soap/utility - GetMeterReading)</option>
+            </select>
             <button id="btnFetchToken" class="btn-token" style="background:#059669;" onclick="fetchLiveToken()">
-              <span>⚡ Backend Mock Token holen (btc-demo-client)</span>
+              <span>⚡ 1. Mock-Token holen</span>
+            </button>
+            <button id="btnInvokeMock" class="btn-token" style="background:#0D9488;" onclick="invokeMockLive()">
+              <span>🚀 2. Schnittstelle live testen</span>
             </button>
           </div>
         </div>
 
-        <div class="token-display-row" style="margin-top:6px;">
+        <div class="token-display-row">
           <span style="font-size:0.75rem; font-weight:700; color:#059669; white-space:nowrap;">OAuth 2.0 Bearer:</span>
-          <code id="tokenDisplay" style="font-size:0.78rem;">&lt;Klicke rechts oben auf 'Backend Mock Token holen', um Provider-Token zu generieren&gt;</code>
+          <code id="tokenDisplay" style="font-size:0.78rem;">&lt;Klicke oben auf 'Mock-Token holen', um Provider-Token zu generieren&gt;</code>
           <span id="tokenBadge" class="token-status-badge">Kein Token</span>
           <button class="copy-btn" onclick="copyLiveToken(this)">Kopieren</button>
+        </div>
+
+        <!-- Live Response Box for Mock API Direct Call -->
+        <div id="mockLiveResultBox" style="display:none; margin-top:14px; background:#0F172A; border:1px solid #334155; border-radius:8px; padding:12px 14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:6px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span id="mockLiveStatusBadge" style="font-weight:700; font-size:0.82rem; color:#4ADE80;">✅ HTTP 200 OK</span>
+              <span id="mockLiveEndpoint" style="font-size:0.75rem; color:#38BDF8; font-family:monospace; background:#1E293B; padding:2px 6px; border-radius:4px;"></span>
+            </div>
+            <span id="mockLiveDuration" style="font-size:0.72rem; color:#94A3B8;"></span>
+          </div>
+          <pre style="margin:0; padding:0; max-height:220px; overflow-y:auto;"><code id="mockLiveCode" style="color:#A7F3D0; font-size:0.75rem;"></code></pre>
+          <div id="mockLiveExplanation" style="margin-top:8px; font-size:0.75rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:6px; line-height:1.4;"></div>
         </div>
       </div>
 
@@ -1072,7 +1104,12 @@ app.get('/', (req, res) => {
      -d "grant_type=client_credentials&client_id=btc-demo-client&client_secret=btc-demo-secret-2026"</code></pre>
           </div>
 
-          <h3>2. Zählerdaten abrufen mit Bearer Token</h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <h3 style="margin:0;">2. Zählerdaten abrufen mit Bearer Token</h3>
+            <button class="btn-token" style="background:#0D9488; font-size:0.75rem; padding:4px 10px;" onclick="invokeMockLive('rest')">
+              🚀 REST nativ im Browser aufrufen
+            </button>
+          </div>
           <div class="code-box">
             <div class="code-box-header"><span>GET /api/v1/smartmeters</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="curlRestReading">curl -L -X GET "${hostUrl}/api/v1/smartmeters" \\
@@ -1174,7 +1211,12 @@ IntegrationCell.Include = true</code></pre>
           <p style="font-size:0.9rem; color:#475569;">
             <b>Direkter Backend-Test:</b> Abfrage direkt gegen Vercel mit OAuth 2.0 Bearer Token.
           </p>
-          <h3>1. Alle Zählerstände abrufen</h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <h3 style="margin:0;">1. Alle Zählerstände abrufen</h3>
+            <button class="btn-token" style="background:#0D9488; font-size:0.75rem; padding:4px 10px;" onclick="invokeMockLive('odata-v2')">
+              🚀 OData v2 nativ im Browser aufrufen
+            </button>
+          </div>
           <div class="code-box">
             <div class="code-box-header"><span>GET /odata/v2/utility/MeterReadingSet</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="curlODataV2All">curl -L -X GET "${hostUrl}/odata/v2/utility/MeterReadingSet" \\
@@ -1294,7 +1336,12 @@ IntegrationCell.Include = true</code></pre>
           <p style="font-size:0.9rem; color:#475569;">
             <b>Direkter Backend-Test:</b> OASIS OData v4 Format mit Bearer Token.
           </p>
-          <h3>Zählerstände im OData v4 Format abrufen</h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <h3 style="margin:0;">Zählerstände im OData v4 Format abrufen</h3>
+            <button class="btn-token" style="background:#0D9488; font-size:0.75rem; padding:4px 10px;" onclick="invokeMockLive('odata-v4')">
+              🚀 OData v4 nativ im Browser aufrufen
+            </button>
+          </div>
           <div class="code-box">
             <div class="code-box-header"><span>GET /odata/v4/utility/MeterReadings</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="curlODataV4All">curl -L -X GET "${hostUrl}/odata/v4/utility/MeterReadings" \\
@@ -1387,7 +1434,12 @@ IntegrationCell.Include = true</code></pre>
           <p style="font-size:0.9rem; color:#475569;">
             <b>Direkter Backend-Test:</b> SOAP 1.1 Envelope mit Bearer Token.
           </p>
-          <h3>SOAP Request mit XML-Payload & Bearer Token</h3>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <h3 style="margin:0;">SOAP Request mit XML-Payload & Bearer Token</h3>
+            <button class="btn-token" style="background:#0D9488; font-size:0.75rem; padding:4px 10px;" onclick="invokeMockLive('soap')">
+              🚀 SOAP nativ im Browser aufrufen
+            </button>
+          </div>
           <div class="code-box">
             <div class="code-box-header"><span>POST ${hostUrl}/soap/utility</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
             <pre><code id="curlSoap">curl -L -X POST "${hostUrl}/soap/utility" \\
@@ -1574,6 +1626,11 @@ IntegrationCell.Include = true</code></pre>
                 <div><b>Client ID:</b> sb-f581317a-f129-40a9-a0fb-cdf54f81e053!b711904|it-rt-872f920dtrial!b26655</div>
                 <div><b>Grant Type:</b> client_credentials (XSUAA OAuth2)</div>
                 <div><b>Ziel-Endpoint:</b> /demo (Integration Cell)</div>
+              </div>
+
+              <!-- WICHTIGER DIDAKTISCHER MERKSATZ -->
+              <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:6px; padding:8px 10px; margin-bottom:12px; font-size:0.75rem; color:#92400E; line-height:1.4;">
+                💡 <b>Wichtige Architektur-Erkenntnis:</b> Solange im SAP Developer Hub <b>kein Produkt</b> angelegt bzw. die API nicht an ein Produkt gebunden ist, funktioniert dieser generische Service Key <b>einwandfrei (HTTP 200 OK)</b>! Erst sobald ein Produkt erzeugt und abonniert wird, erzwingt die Integration Cell die produktgebundene App-Subskription und verweigert den Service Key mit <b>HTTP 403 Forbidden</b>.
               </div>
 
               <!-- Token Display -->
@@ -1768,7 +1825,7 @@ IntegrationCell.Include = true</code></pre>
           statusBadge.innerText = '❌ HTTP ' + data.status + ' ' + (data.statusText || 'Forbidden') + ' · Server: ' + (data.server || 'istio-envoy');
           durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           codeEl.innerText = JSON.stringify(data.data, null, 2);
-          explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Das Bearer-Token wurde von XSUAA fehlerfrei ausgestellt. Doch die Integration Cell lehnt den Aufruf mit <b>403 Forbidden</b> ab (<i>User does not have the authorization</i>), weil dem generic Service Key der Runtime die Produkt-Subskription aus dem Developer Hub fehlt!';
+          explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Das Bearer-Token wurde von XSUAA fehlerfrei ausgestellt. Doch die Integration Cell lehnt den Aufruf mit <b>403 Forbidden</b> ab (<i>User does not have the authorization</i>), weil dem generic Service Key der Runtime die Produkt-Subskription aus dem Developer Hub fehlt!<br/><br/>💡 <b>Wichtige Architektur-Erkenntnis:</b> Hättest du im SAP Developer Hub <i>kein</i> Produkt angelegt (bzw. die API nicht an ein Produkt gebunden), würde dieser generische Service Key einwandfrei mit <b>HTTP 200 OK</b> durchgehen! Erst sobald ein Produkt erzeugt und abonniert wird, erzwingt die Integration Cell die strikte produktgebundene Zugriffskontrolle.';
         } else {
           statusBadge.style.color = '#F87171';
           statusBadge.innerText = '❌ HTTP ' + (data.status || '500') + ' ' + (data.statusText || 'Error');
@@ -1783,6 +1840,127 @@ IntegrationCell.Include = true</code></pre>
         codeEl.innerText = err.message;
         explanation.innerText = '';
       }
+    }
+
+    // ========================================================
+    // NATIVE MOCK API LIVE-TESTS (OHNE TERMINAL / cURL)
+    // ========================================================
+    const MOCK_PROTOCOLS = {
+      'rest': {
+        name: 'REST API (OpenAPI 3.0)',
+        method: 'GET',
+        url: '/api/v1/smartmeters',
+        headers: { 'Accept': 'application/json' },
+        explanation: '💡 <b>REST-Aufruf erfolgreich:</b> Das Mock-Backend hat das Bearer-Token autorisiert und liefert die 4 Zähler-Datensätze als JSON nach OpenAPI 3.0 Spezifikation.'
+      },
+      'odata-v2': {
+        name: 'SAP OData v2 Service',
+        method: 'GET',
+        url: '/odata/v2/utility/MeterReadingSet',
+        headers: { 'Accept': 'application/json' },
+        explanation: '💡 <b>OData v2 Aufruf erfolgreich:</b> Der native IS-U Utility Service antwortet im standardisierten OData v2 JSON-Format (EntitySet <code>MeterReadingSet</code>).'
+      },
+      'odata-v4': {
+        name: 'SAP OData v4 Service',
+        method: 'GET',
+        url: '/odata/v4/utility/MeterReadings',
+        headers: { 'Accept': 'application/json' },
+        explanation: '💡 <b>OData v4 Aufruf erfolgreich:</b> Moderner RAP/CAP Service mit flachem OASIS OData v4 JSON (inkl. <code>@odata.context</code> und <code>value</code>).'
+      },
+      'soap': {
+        name: 'Legacy SOAP 1.1 Web Service',
+        method: 'POST',
+        url: '/soap/utility',
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          'SOAPAction': 'http://btc.de/energy/metering/soap/GetMeterReading'
+        },
+        body: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap">\\n   <soapenv:Header/>\\n   <soapenv:Body>\\n      <btc:GetMeterReadingRequest>\\n         <btc:MeterId>DE-OL-MTR-002</btc:MeterId>\\n      </btc:GetMeterReadingRequest>\\n   </soapenv:Body>\\n</soapenv:Envelope>',
+        explanation: '💡 <b>SOAP 1.1 Aufruf erfolgreich:</b> Der XML-Webservice hat den SOAP-Envelope und die SOAPAction verarbeitet und liefert valides SOAP-Response XML zurück.'
+      }
+    };
+
+    function onMockEndpointChange(val) {
+      selectProtocol(val);
+    }
+
+    async function invokeMockLive(proto) {
+      const selected = proto || document.getElementById('mockEndpointSelect')?.value || 'rest';
+      const config = MOCK_PROTOCOLS[selected] || MOCK_PROTOCOLS.rest;
+
+      const selectEl = document.getElementById('mockEndpointSelect');
+      if (selectEl) selectEl.value = selected;
+
+      const resultBox = document.getElementById('mockLiveResultBox');
+      const statusBadge = document.getElementById('mockLiveStatusBadge');
+      const endpointSpan = document.getElementById('mockLiveEndpoint');
+      const durationSpan = document.getElementById('mockLiveDuration');
+      const codeEl = document.getElementById('mockLiveCode');
+      const explanation = document.getElementById('mockLiveExplanation');
+      const btn = document.getElementById('btnInvokeMock');
+
+      resultBox.style.display = 'block';
+      statusBadge.style.color = '#38BDF8';
+      statusBadge.innerText = '⏳ Sende nativen Request...';
+      endpointSpan.innerText = config.method + ' ' + config.url;
+      durationSpan.innerText = '';
+      codeEl.innerText = 'Rufe Mock-Backend direkt im Browser auf...';
+      explanation.innerText = '';
+
+      if (btn) btn.classList.add('loading');
+
+      try {
+        if (!currentLiveToken) {
+          statusBadge.innerText = '⏳ Hole zuerst Provider-Token...';
+          await fetchLiveToken();
+        }
+
+        const startTime = Date.now();
+        const headers = { ...config.headers };
+        if (currentLiveToken) {
+          headers['Authorization'] = 'Bearer ' + currentLiveToken;
+        }
+
+        const res = await fetch(config.url, {
+          method: config.method,
+          headers: headers,
+          body: config.body || undefined
+        });
+
+        const durationMs = Date.now() - startTime;
+        if (btn) btn.classList.remove('loading');
+
+        const contentType = res.headers.get('content-type') || '';
+        let displayData;
+        if (contentType.includes('application/json')) {
+          const json = await res.json();
+          displayData = JSON.stringify(json, null, 2);
+        } else {
+          displayData = await res.text();
+        }
+
+        if (res.ok) {
+          statusBadge.style.color = '#4ADE80';
+          statusBadge.innerText = '✅ HTTP ' + res.status + ' ' + (res.statusText || 'OK');
+          durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
+          codeEl.innerText = displayData;
+          explanation.innerHTML = config.explanation;
+        } else {
+          statusBadge.style.color = '#F87171';
+          statusBadge.innerText = '❌ HTTP ' + res.status + ' ' + (res.statusText || 'Error');
+          durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
+          codeEl.innerText = displayData;
+          explanation.innerHTML = '⚠️ Das Mock-Backend meldete einen Fehler: Bitte überprüfe das Bearer-Token.';
+        }
+      } catch (err) {
+        if (btn) btn.classList.remove('loading');
+        statusBadge.style.color = '#F87171';
+        statusBadge.innerText = '❌ Verbindungsfehler';
+        codeEl.innerText = err.message;
+        explanation.innerText = '';
+      }
+
+      resultBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function updateApimCurlWithBtpToken(token) {
@@ -1873,6 +2051,11 @@ IntegrationCell.Include = true</code></pre>
 
       const sec = document.getElementById('section-' + protoId);
       if (sec) sec.style.display = 'block';
+
+      const selectEl = document.getElementById('mockEndpointSelect');
+      if (selectEl && selectEl.value !== protoId) {
+        selectEl.value = protoId;
+      }
     }
 
     function switchInnerTab(section, tabId) {
