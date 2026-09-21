@@ -87,23 +87,38 @@ setupOData(app, getBaseUrl, meterDatabase);
 // =============================================================
 // BTP INBOUND TOKEN & INTEGRATION CELL GATEWAY
 // =============================================================
-const BTP_DEFAULT_CONFIG = {
-  tokenUrl: process.env.BTP_TOKEN_URL || 'https://872f920dtrial.authentication.us10.hana.ondemand.com/oauth/token',
-  clientId: process.env.BTP_CLIENT_ID || 'sb-dh-3b72cd96-320d-4551-9fe8-9d9c6e30349a!b711904|it-rt-872f920dtrial!b26655',
-  clientSecret: process.env.BTP_CLIENT_SECRET || 'a8d3e87a-1e53-4f99-8620-44f7d9b443b4$CLkv5lmOWJUnk6wEKHgMmdJpPYEzrElVzw1wuvFE13o=',
-  icEndpoint: process.env.BTP_IC_ENDPOINT || 'https://872f920dtrial-d58ffe5a9522426e865d4e1cc662a85c.a.integration.cloud.sap/demo'
+const BTP_CREDENTIALS = {
+  devhub: {
+    id: 'devhub',
+    label: 'Developer Key (Developer Hub Application)',
+    tokenUrl: process.env.BTP_DEVHUB_TOKEN_URL || 'https://872f920dtrial.authentication.us10.hana.ondemand.com/oauth/token',
+    clientId: process.env.BTP_DEVHUB_CLIENT_ID || 'sb-dh-3b72cd96-320d-4551-9fe8-9d9c6e30349a!b711904|it-rt-872f920dtrial!b26655',
+    clientSecret: process.env.BTP_DEVHUB_CLIENT_SECRET || 'a8d3e87a-1e53-4f99-8620-44f7d9b443b4$CLkv5lmOWJUnk6wEKHgMmdJpPYEzrElVzw1wuvFE13o=',
+    endpoint: process.env.BTP_DEVHUB_ENDPOINT || 'https://872f920dtrial-d58ffe5a9522426e865d4e1cc662a85c.a.integration.cloud.sap/demo'
+  },
+  servicekey: {
+    id: 'servicekey',
+    label: 'Service Key (Process Integration Runtime it-rt)',
+    tokenUrl: process.env.BTP_SVC_TOKEN_URL || 'https://872f920dtrial.authentication.us10.hana.ondemand.com/oauth/token',
+    clientId: process.env.BTP_SVC_CLIENT_ID || 'sb-f581317a-f129-40a9-a0fb-cdf54f81e053!b711904|it-rt-872f920dtrial!b26655',
+    clientSecret: process.env.BTP_SVC_CLIENT_SECRET || '4452ad3d-2f32-4fa2-b70a-05c476416f3f$GrETQG-ri2w2Cdl73s4lJ0XWtomSPU5Iu46MLF025ko=',
+    endpoint: process.env.BTP_SVC_ENDPOINT || 'https://872f920dtrial-d58ffe5a9522426e865d4e1cc662a85c.a.integration.cloud.sap/demo'
+  }
 };
 
-// Endpoint to fetch BTP XSUAA Inbound Token
+// Endpoint to fetch BTP XSUAA Inbound Token (devhub or servicekey)
 app.all('/api/btp/token', async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const tokenUrl = req.body?.tokenUrl || req.query?.tokenUrl || BTP_DEFAULT_CONFIG.tokenUrl;
-  const clientId = req.body?.clientId || req.query?.clientId || BTP_DEFAULT_CONFIG.clientId;
-  const clientSecret = req.body?.clientSecret || req.query?.clientSecret || BTP_DEFAULT_CONFIG.clientSecret;
+  const keyType = req.body?.keyType || req.query?.keyType || 'devhub';
+  const creds = BTP_CREDENTIALS[keyType] || BTP_CREDENTIALS.devhub;
+
+  const tokenUrl = req.body?.tokenUrl || req.query?.tokenUrl || creds.tokenUrl;
+  const clientId = req.body?.clientId || req.query?.clientId || creds.clientId;
+  const clientSecret = req.body?.clientSecret || req.query?.clientSecret || creds.clientSecret;
 
   try {
     const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -122,6 +137,7 @@ app.all('/api/btp/token', async (req, res) => {
     }
 
     return res.json({
+      keyType,
       access_token: data.access_token,
       token_type: data.token_type || 'bearer',
       expires_in: data.expires_in || 3599,
@@ -141,14 +157,16 @@ app.all('/api/btp/invoke', async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const endpointUrl = req.body?.endpointUrl || req.query?.endpointUrl || BTP_DEFAULT_CONFIG.icEndpoint;
+  const keyType = req.body?.keyType || req.query?.keyType || 'devhub';
+  const creds = BTP_CREDENTIALS[keyType] || BTP_CREDENTIALS.devhub;
+  const endpointUrl = req.body?.endpointUrl || req.query?.endpointUrl || creds.endpoint;
   let token = req.body?.token || req.query?.token;
 
   try {
     const startTime = Date.now();
     if (!token) {
-      const basicAuth = Buffer.from(`${BTP_DEFAULT_CONFIG.clientId}:${BTP_DEFAULT_CONFIG.clientSecret}`).toString('base64');
-      const tokenResp = await fetch(BTP_DEFAULT_CONFIG.tokenUrl, {
+      const basicAuth = Buffer.from(`${creds.clientId}:${creds.clientSecret}`).toString('base64');
+      const tokenResp = await fetch(creds.tokenUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Basic ${basicAuth}`,
@@ -177,6 +195,7 @@ app.all('/api/btp/invoke', async (req, res) => {
     }
 
     return res.json({
+      keyType,
       status: icResp.status,
       statusText: icResp.statusText,
       durationMs,
@@ -965,54 +984,25 @@ app.get('/', (req, res) => {
 
     <div class="body-content">
 
-      <!-- DER INTERAKTIVE DUAL TOKEN GENERATOR (BTP INBOUND & MOCK OUTBOUND) -->
+      <!-- OBERER BEREICH: REINES SCHNITTSTELLEN-MOCK COCKPIT -->
       <div class="token-generator-box">
         <div class="token-header-row">
-          <h4>🔐 Live OAuth 2.0 Token Cockpit (BTP Inbound & Backend Outbound)</h4>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <button id="btnFetchBtpToken" class="btn-token" style="background:#0A58CA;" onclick="fetchBtpInboundToken()">
-              <span>☁️ 1. BTP Inbound Token (XSUAA / Dev Hub)</span>
-            </button>
+          <div>
+            <h4 style="margin:0 0 4px 0;">🔐 1. Backend-Mock Authentifizierung (Provider Token)</h4>
+            <div style="font-size:0.8rem; color:#64748B;">Authentifizierung für den direkten Aufruf des Mock-Backends (Client Credentials Flow mit <code>client_id=btc-demo-client</code>)</div>
+          </div>
+          <div>
             <button id="btnFetchToken" class="btn-token" style="background:#059669;" onclick="fetchLiveToken()">
-              <span>⚡ 2. Backend Mock Token (Outbound)</span>
+              <span>⚡ Backend Mock Token holen (btc-demo-client)</span>
             </button>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:12px; margin-top:8px;">
-          <!-- BTP Inbound Token Display -->
-          <div style="background:white; border:1px solid #CBD5E1; border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; font-size:0.8rem; color:#0A58CA;">☁️ BTP Inbound Token (Konsument ➔ Integration Cell)</span>
-              <span id="btpTokenBadge" class="token-status-badge">Kein Token</span>
-            </div>
-            <code id="btpTokenDisplay" style="font-size:0.75rem; color:#334155; word-break:break-all; max-height:45px; overflow-y:auto;">&lt;Klicke oben auf '1. BTP Inbound Token', um XSUAA-Token abzurufen&gt;</code>
-            <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
-              <button class="copy-btn" onclick="copyBtpToken(this)">Token kopieren</button>
-              <button class="btn-token" style="padding:3px 10px; font-size:0.75rem; background:#0284C7;" onclick="invokeIntegrationCellLive()">🚀 Integration Cell Live testen (/demo)</button>
-            </div>
-          </div>
-
-          <!-- Backend Mock Token Display -->
-          <div style="background:white; border:1px solid #CBD5E1; border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-weight:600; font-size:0.8rem; color:#059669;">⚡ Backend Mock Token (Cell ➔ Vercel Backend)</span>
-              <span id="tokenBadge" class="token-status-badge">Kein Token</span>
-            </div>
-            <code id="tokenDisplay" style="font-size:0.75rem; color:#334155; word-break:break-all; max-height:45px; overflow-y:auto;">&lt;Klicke oben auf '2. Backend Mock Token', um Provider-Token zu generieren&gt;</code>
-            <div style="display:flex; gap:6px; margin-top:4px;">
-              <button class="copy-btn" onclick="copyLiveToken(this)">Token kopieren</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Live Response Box for Integration Cell Test -->
-        <div id="btpLiveResultBox" style="display:none; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:12px 14px; margin-top:8px;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-            <span id="btpLiveStatusBadge" style="font-weight:700; font-size:0.82rem; color:#38BDF8;">⏳ Aufruf läuft...</span>
-            <span id="btpLiveDuration" style="font-size:0.75rem; color:#94A3B8;"></span>
-          </div>
-          <pre style="margin:0; padding:0; max-height:220px; overflow-y:auto;"><code id="btpLiveCode" style="color:#A7F3D0; font-size:0.78rem;"></code></pre>
+        <div class="token-display-row" style="margin-top:6px;">
+          <span style="font-size:0.75rem; font-weight:700; color:#059669; white-space:nowrap;">OAuth 2.0 Bearer:</span>
+          <code id="tokenDisplay" style="font-size:0.78rem;">&lt;Klicke rechts oben auf 'Backend Mock Token holen', um Provider-Token zu generieren&gt;</code>
+          <span id="tokenBadge" class="token-status-badge">Kein Token</span>
+          <button class="copy-btn" onclick="copyLiveToken(this)">Kopieren</button>
         </div>
       </div>
 
@@ -1026,7 +1016,7 @@ app.get('/', (req, res) => {
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/docs" target="_blank" class="btn-link">📖 Swagger UI öffnen</a>
             <a href="/openapi.json" target="_blank" class="btn-link">📜 OpenAPI 3.0 Spezifikation</a>
-            <button class="btn-token" onclick="fetchLiveToken()">⚡ OAuth 2.0 Bearer Token holen</button>
+            <button class="btn-token" onclick="fetchLiveToken()">⚡ Backend Mock Token holen (btc-demo-client)</button>
           </div>
         </div>
 
@@ -1455,6 +1445,138 @@ IntegrationCell.Include = true</code></pre>
 &lt;/VerifyAPIKey&gt;</code></pre>
           </div>
         </div>
+      </div> <!-- closes section-soap -->
+
+      <!-- ======================================================== -->
+      <!-- UNTERER BEREICH: BTP INTEGRATION CELL COCKPIT (2 CLIENT CREDENTIALS BEREICHE) -->
+      <!-- ======================================================== -->
+      <div class="btp-section-container" style="margin-top:35px; padding-top:24px; border-top:2px dashed #CBD5E1;">
+        <div style="margin-bottom:18px;">
+          <h2 style="font-size:1.3rem; color:#0A3D62; margin:0 0 6px 0; display:flex; align-items:center; gap:8px;">
+            <span>☁️ 2. SAP BTP Integration Cell Live-Verifikation & Inbound Token Cockpit</span>
+          </h2>
+          <p style="margin:0; font-size:0.88rem; color:#475569; line-height:1.5;">
+            Verifiziere den echten API-Aufruf gegen das Edge Gateway auf der <b>Integration Cell</b> (<code>/demo</code>). 
+            Teste und vergleiche hier die beiden Schlüsseltypen: Den über den <b>SAP Developer Hub</b> autorisierten <b>Developer Key</b> 
+            gegenüber dem generischen <b>Service Key</b> der Cloud Integration Runtime.
+          </p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap:20px;">
+          
+          <!-- BEREICH 1: DEVELOPER KEY -->
+          <div class="btp-card" style="background:#FFFFFF; border:1px solid #93C5FD; border-radius:10px; padding:18px 20px; box-shadow:0 2px 8px rgba(10,88,202,0.06); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                <div>
+                  <span style="display:inline-block; font-size:0.72rem; font-weight:700; color:#0369A1; background:#E0F2FE; padding:3px 8px; border-radius:4px; margin-bottom:4px;">
+                    PRODUKT-SUBSKRIPTION AKTIV
+                  </span>
+                  <h3 style="margin:0; font-size:1.05rem; color:#0A58CA; display:flex; align-items:center; gap:6px;">
+                    🔑 Bereich A: Developer Key (Developer Hub)
+                  </h3>
+                </div>
+                <span id="btpDevTokenBadge" class="token-status-badge">Kein Token</span>
+              </div>
+              <p style="font-size:0.82rem; color:#64748B; margin:0 0 12px 0; line-height:1.4;">
+                Erstellt bei der Registrierung der Konsumenten-App im <b>SAP Developer Hub</b>. Besitzt die Berechtigung für das abonnierte API-Produkt auf der Integration Cell.
+              </p>
+              
+              <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; font-size:0.75rem; font-family:monospace; margin-bottom:12px; color:#334155; line-height:1.4;">
+                <div><b>Client ID:</b> sb-dh-3b72cd96-320d-4551-9fe8-9d9c6e30349a!b711904|it-rt-872f920dtrial!b26655</div>
+                <div><b>Grant Type:</b> client_credentials (XSUAA OAuth2)</div>
+                <div><b>Ziel-Endpoint:</b> /demo (Integration Cell)</div>
+              </div>
+
+              <!-- Token Display -->
+              <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <span style="font-size:0.75rem; font-weight:600; color:#475569;">Bearer Access Token:</span>
+                  <button class="copy-btn" onclick="copyBtpToken('devhub', this)">Kopieren</button>
+                </div>
+                <code id="btpDevTokenDisplay" style="display:block; font-size:0.73rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; color:#1E293B; word-break:break-all; max-height:45px; overflow-y:auto;">&lt;Klicke unten auf 'Developer-Token holen'&gt;</code>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <button id="btnFetchDevToken" class="btn-token" style="background:#0A58CA;" onclick="fetchBtpToken('devhub')">
+                  <span>⚡ 1. Developer-Token holen</span>
+                </button>
+                <button id="btnInvokeDev" class="btn-token" style="background:#0284C7;" onclick="invokeBtp('devhub')">
+                  <span>🚀 2. Integration Cell testen (/demo)</span>
+                </button>
+              </div>
+
+              <!-- Live Result Box -->
+              <div id="btpDevResultBox" style="display:none; margin-top:12px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:10px 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span id="btpDevStatusBadge" style="font-weight:700; font-size:0.8rem; color:#4ADE80;">✅ HTTP 200 OK</span>
+                  <span id="btpDevDuration" style="font-size:0.72rem; color:#94A3B8;"></span>
+                </div>
+                <pre style="margin:0; padding:0; max-height:160px; overflow-y:auto;"><code id="btpDevCode" style="color:#A7F3D0; font-size:0.74rem;"></code></pre>
+                <div id="btpDevExplanation" style="margin-top:8px; font-size:0.75rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:6px; line-height:1.4;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- BEREICH 2: SERVICE KEY -->
+          <div class="btp-card" style="background:#FFFFFF; border:1px solid #CBD5E1; border-radius:10px; padding:18px 20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                <div>
+                  <span style="display:inline-block; font-size:0.72rem; font-weight:700; color:#475569; background:#F1F5F9; padding:3px 8px; border-radius:4px; margin-bottom:4px;">
+                    SERVICE BINDING (it-rt)
+                  </span>
+                  <h3 style="margin:0; font-size:1.05rem; color:#334155; display:flex; align-items:center; gap:6px;">
+                    ⚙️ Bereich B: Service Key (Integration Runtime)
+                  </h3>
+                </div>
+                <span id="btpSvcTokenBadge" class="token-status-badge">Kein Token</span>
+              </div>
+              <p style="font-size:0.82rem; color:#64748B; margin:0 0 12px 0; line-height:1.4;">
+                Direktes Service Binding der <b>Process Integration Runtime (it-rt)</b>. Besitzt Plattform-Rechte, aber <i>keine</i> Produkt-Berechtigung im Developer Hub.
+              </p>
+              
+              <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; font-size:0.75rem; font-family:monospace; margin-bottom:12px; color:#334155; line-height:1.4;">
+                <div><b>Client ID:</b> sb-f581317a-f129-40a9-a0fb-cdf54f81e053!b711904|it-rt-872f920dtrial!b26655</div>
+                <div><b>Grant Type:</b> client_credentials (XSUAA OAuth2)</div>
+                <div><b>Ziel-Endpoint:</b> /demo (Integration Cell)</div>
+              </div>
+
+              <!-- Token Display -->
+              <div style="margin-bottom:12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <span style="font-size:0.75rem; font-weight:600; color:#475569;">Bearer Access Token:</span>
+                  <button class="copy-btn" onclick="copyBtpToken('servicekey', this)">Kopieren</button>
+                </div>
+                <code id="btpSvcTokenDisplay" style="display:block; font-size:0.73rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; color:#1E293B; word-break:break-all; max-height:45px; overflow-y:auto;">&lt;Klicke unten auf 'Service-Token holen'&gt;</code>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                <button id="btnFetchSvcToken" class="btn-token" style="background:#475569;" onclick="fetchBtpToken('servicekey')">
+                  <span>⚡ 1. Service-Token holen</span>
+                </button>
+                <button id="btnInvokeSvc" class="btn-token" style="background:#64748B;" onclick="invokeBtp('servicekey')">
+                  <span>🚀 2. Integration Cell testen (/demo)</span>
+                </button>
+              </div>
+
+              <!-- Live Result Box -->
+              <div id="btpSvcResultBox" style="display:none; margin-top:12px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:10px 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                  <span id="btpSvcStatusBadge" style="font-weight:700; font-size:0.8rem; color:#F87171;">❌ HTTP 403 Forbidden</span>
+                  <span id="btpSvcDuration" style="font-size:0.72rem; color:#94A3B8;"></span>
+                </div>
+                <pre style="margin:0; padding:0; max-height:160px; overflow-y:auto;"><code id="btpSvcCode" style="color:#FECACA; font-size:0.74rem;"></code></pre>
+                <div id="btpSvcExplanation" style="margin-top:8px; font-size:0.75rem; color:#FCA5A5; border-top:1px solid #1E293B; padding-top:6px; line-height:1.4;"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
 
     </div>
@@ -1462,32 +1584,37 @@ IntegrationCell.Include = true</code></pre>
 
   <script>
     let currentLiveToken = "";
-    let currentBtpToken = "";
-    let btpTimerInterval = null;
+    const btpTokens = { devhub: "", servicekey: "" };
+    const btpTimers = { devhub: null, servicekey: null };
 
-    async function fetchBtpInboundToken() {
-      const btn = document.getElementById('btnFetchBtpToken');
-      const badge = document.getElementById('btpTokenBadge');
-      const display = document.getElementById('btpTokenDisplay');
-      if (btn) btn.innerHTML = '<span>⏳ BTP XSUAA abfragen...</span>';
+    async function fetchBtpToken(type) {
+      const isDev = type === 'devhub';
+      const btn = document.getElementById(isDev ? 'btnFetchDevToken' : 'btnFetchSvcToken');
+      const badge = document.getElementById(isDev ? 'btpDevTokenBadge' : 'btpSvcTokenBadge');
+      const display = document.getElementById(isDev ? 'btpDevTokenDisplay' : 'btpSvcTokenDisplay');
+      
+      if (btn) {
+        btn.classList.add('loading');
+        btn.innerHTML = '<span>⏳ XSUAA abfragen...</span>';
+      }
 
       try {
-        const res = await fetch('/api/btp/token');
+        const res = await fetch('/api/btp/token?keyType=' + type);
         const data = await res.json();
         if (data.access_token) {
-          currentBtpToken = data.access_token;
-          if (display) display.innerText = currentBtpToken;
+          btpTokens[type] = data.access_token;
+          if (display) display.innerText = data.access_token;
           
           let secondsLeft = data.expires_in || 3599;
           if (badge) {
             badge.classList.add('active');
             badge.innerText = 'Gültig (' + secondsLeft + 's)';
           }
-          if (btpTimerInterval) clearInterval(btpTimerInterval);
-          btpTimerInterval = setInterval(() => {
+          if (btpTimers[type]) clearInterval(btpTimers[type]);
+          btpTimers[type] = setInterval(() => {
             secondsLeft--;
             if (secondsLeft <= 0) {
-              clearInterval(btpTimerInterval);
+              clearInterval(btpTimers[type]);
               if (badge) badge.innerText = 'Abgelaufen';
             } else if (badge) {
               badge.innerText = 'Gültig (' + secondsLeft + 's)';
@@ -1495,66 +1622,97 @@ IntegrationCell.Include = true</code></pre>
           }, 1000);
 
           if (btn) {
-            btn.innerHTML = '<span>✓ BTP Token aktiv!</span>';
-            setTimeout(() => { btn.innerHTML = '<span>🔄 BTP Token erneuern</span>'; }, 2000);
+            btn.classList.remove('loading');
+            btn.innerHTML = '<span>✓ Token aktiv!</span>';
+            setTimeout(() => { 
+              btn.innerHTML = isDev ? '<span>🔄 Developer-Token erneuern</span>' : '<span>🔄 Service-Token erneuern</span>'; 
+            }, 2000);
           }
 
-          updateApimCurlWithBtpToken(currentBtpToken);
+          if (isDev) {
+            updateApimCurlWithBtpToken(data.access_token);
+          }
         } else {
           if (display) display.innerText = 'Fehler: ' + JSON.stringify(data);
-          if (btn) btn.innerHTML = '<span>☁️ 1. BTP Inbound Token (XSUAA)</span>';
+          if (btn) {
+            btn.classList.remove('loading');
+            btn.innerHTML = isDev ? '<span>⚡ 1. Developer-Token holen</span>' : '<span>⚡ 1. Service-Token holen</span>';
+          }
         }
       } catch (err) {
         if (display) display.innerText = 'Netzwerkfehler: ' + err.message;
-        if (btn) btn.innerHTML = '<span>☁️ 1. BTP Inbound Token (XSUAA)</span>';
+        if (btn) {
+          btn.classList.remove('loading');
+          btn.innerHTML = isDev ? '<span>⚡ 1. Developer-Token holen</span>' : '<span>⚡ 1. Service-Token holen</span>';
+        }
       }
     }
 
-    function copyBtpToken(btn) {
-      if (!currentBtpToken) {
-        alert("Bitte hole zuerst über den blauen Knopf ein BTP Inbound Token!");
+    function copyBtpToken(type, btn) {
+      const token = btpTokens[type];
+      if (!token) {
+        alert("Bitte hole zuerst über den entsprechenden Button ein Token!");
         return;
       }
-      navigator.clipboard.writeText(currentBtpToken).then(() => {
+      navigator.clipboard.writeText(token).then(() => {
         btn.innerText = "✓ Kopiert!";
-        setTimeout(() => { btn.innerText = "Token kopieren"; }, 2000);
+        setTimeout(() => { btn.innerText = "Kopieren"; }, 2000);
       });
     }
 
-    async function invokeIntegrationCellLive() {
-      const resultBox = document.getElementById('btpLiveResultBox');
-      const statusBadge = document.getElementById('btpLiveStatusBadge');
-      const durationSpan = document.getElementById('btpLiveDuration');
-      const codeEl = document.getElementById('btpLiveCode');
+    async function invokeBtp(type) {
+      const isDev = type === 'devhub';
+      const resultBox = document.getElementById(isDev ? 'btpDevResultBox' : 'btpSvcResultBox');
+      const statusBadge = document.getElementById(isDev ? 'btpDevStatusBadge' : 'btpSvcStatusBadge');
+      const durationSpan = document.getElementById(isDev ? 'btpDevDuration' : 'btpSvcDuration');
+      const codeEl = document.getElementById(isDev ? 'btpDevCode' : 'btpSvcCode');
+      const explanation = document.getElementById(isDev ? 'btpDevExplanation' : 'btpSvcExplanation');
+      const btn = document.getElementById(isDev ? 'btnInvokeDev' : 'btnInvokeSvc');
 
       resultBox.style.display = 'block';
       statusBadge.style.color = '#38BDF8';
-      statusBadge.innerText = '⏳ Rufe BTP Integration Cell (/demo) auf...';
+      statusBadge.innerText = '⏳ Rufe Integration Cell (/demo) auf...';
       durationSpan.innerText = '';
       codeEl.innerText = 'Verbinde mit Istio Envoy Gateway und K8s Worker-Pod...';
+      explanation.innerText = '';
+
+      if (btn) btn.classList.add('loading');
 
       try {
         const res = await fetch('/api/btp/invoke', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: currentBtpToken })
+          body: JSON.stringify({ keyType: type, token: btpTokens[type] || undefined })
         });
         const data = await res.json();
+        
+        if (btn) btn.classList.remove('loading');
+
         if (data.status === 200) {
           statusBadge.style.color = '#4ADE80';
           statusBadge.innerText = '✅ HTTP ' + data.status + ' OK · Server: ' + (data.server || 'istio-envoy');
           durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms · Artefakt: ' + (data.artifactType || 'api');
           codeEl.innerText = JSON.stringify(data.data, null, 2);
+          explanation.innerHTML = '💡 <b>Erfolg:</b> Der API-Proxy auf der Integration Cell hat das Token verifiziert. Die Client-ID ist über den <b>Developer Hub</b> an das API-Produkt gebunden. Die Zählerdaten des Backends wurden erfolgreich geliefert!';
+        } else if (data.status === 403) {
+          statusBadge.style.color = '#F87171';
+          statusBadge.innerText = '❌ HTTP ' + data.status + ' ' + (data.statusText || 'Forbidden') + ' · Server: ' + (data.server || 'istio-envoy');
+          durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
+          codeEl.innerText = JSON.stringify(data.data, null, 2);
+          explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Das Bearer-Token wurde von XSUAA fehlerfrei ausgestellt. Doch die Integration Cell lehnt den Aufruf mit <b>403 Forbidden</b> ab (<i>User doesn\'t have the authorization</i>), weil dem generic Service Key der Runtime die Produkt-Subskription aus dem Developer Hub fehlt!';
         } else {
           statusBadge.style.color = '#F87171';
-          statusBadge.innerText = '❌ HTTP ' + data.status + ' ' + (data.statusText || 'Error');
-          durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
-          codeEl.innerText = JSON.stringify(data, null, 2);
+          statusBadge.innerText = '❌ HTTP ' + (data.status || '500') + ' ' + (data.statusText || 'Error');
+          durationSpan.innerText = data.durationMs ? ('Dauer: ' + data.durationMs + ' ms') : '';
+          codeEl.innerText = JSON.stringify(data.data || data, null, 2);
+          explanation.innerHTML = '⚠️ Die Integration Cell hat einen Fehler gemeldet.';
         }
       } catch (err) {
+        if (btn) btn.classList.remove('loading');
         statusBadge.style.color = '#F87171';
         statusBadge.innerText = '❌ Verbindungsfehler';
         codeEl.innerText = err.message;
+        explanation.innerText = '';
       }
     }
 
