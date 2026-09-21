@@ -1048,7 +1048,7 @@ app.get('/', (req, res) => {
           <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
             <a href="/docs" target="_blank" class="btn-link">📖 Swagger UI öffnen</a>
             <a href="/openapi.json" target="_blank" class="btn-link">📜 OpenAPI 3.0 Spezifikation</a>
-            <button class="btn-token" onclick="fetchLiveToken()">⚡ Backend Mock Token holen (btc-demo-client)</button>
+            <button id="btnFetchTokenRest" class="btn-token" onclick="fetchLiveToken()">⚡ Backend Mock Token holen (btc-demo-client)</button>
           </div>
         </div>
 
@@ -1680,16 +1680,53 @@ IntegrationCell.Include = true</code></pre>
       }
     }
 
-    function copyBtpToken(type, btn) {
-      const token = btpTokens[type];
-      if (!token) {
-        alert("Bitte hole zuerst über den entsprechenden Button ein Token!");
+    function copyToClipboard(text, btn) {
+      if (!text) {
+        alert("Bitte hole zuerst über den Button ein Token!");
         return;
       }
-      navigator.clipboard.writeText(token).then(() => {
+      const originalText = btn.innerText;
+      const markSuccess = () => {
         btn.innerText = "✓ Kopiert!";
-        setTimeout(() => { btn.innerText = "Kopieren"; }, 2000);
-      });
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.classList.remove('copied');
+        }, 2000);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(markSuccess).catch(() => {
+          fallbackCopy(text, markSuccess);
+        });
+      } else {
+        fallbackCopy(text, markSuccess);
+      }
+    }
+
+    function fallbackCopy(text, onSuccess) {
+      try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        if (successful) {
+          onSuccess();
+          return;
+        }
+      } catch (err) {}
+      window.prompt("Token markieren und kopieren (Strg+C / Cmd+C):", text);
+    }
+
+    function copyBtpToken(type, btn) {
+      const token = btpTokens[type];
+      copyToClipboard(token, btn);
     }
 
     async function invokeBtp(type) {
@@ -1731,7 +1768,7 @@ IntegrationCell.Include = true</code></pre>
           statusBadge.innerText = '❌ HTTP ' + data.status + ' ' + (data.statusText || 'Forbidden') + ' · Server: ' + (data.server || 'istio-envoy');
           durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           codeEl.innerText = JSON.stringify(data.data, null, 2);
-          explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Das Bearer-Token wurde von XSUAA fehlerfrei ausgestellt. Doch die Integration Cell lehnt den Aufruf mit <b>403 Forbidden</b> ab (<i>User doesn\'t have the authorization</i>), weil dem generic Service Key der Runtime die Produkt-Subskription aus dem Developer Hub fehlt!';
+          explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Das Bearer-Token wurde von XSUAA fehlerfrei ausgestellt. Doch die Integration Cell lehnt den Aufruf mit <b>403 Forbidden</b> ab (<i>User does not have the authorization</i>), weil dem generic Service Key der Runtime die Produkt-Subskription aus dem Developer Hub fehlt!';
         } else {
           statusBadge.style.color = '#F87171';
           statusBadge.innerText = '❌ HTTP ' + (data.status || '500') + ' ' + (data.statusText || 'Error');
@@ -1761,11 +1798,11 @@ IntegrationCell.Include = true</code></pre>
     }
 
     async function fetchLiveToken() {
-      const btns = document.querySelectorAll('.btn-token');
+      const liveBtns = [document.getElementById('btnFetchToken'), document.getElementById('btnFetchTokenRest')].filter(Boolean);
       const badge = document.getElementById('tokenBadge');
       const display = document.getElementById('tokenDisplay');
       
-      btns.forEach(b => {
+      liveBtns.forEach(b => {
         b.classList.add('loading');
         b.innerHTML = '<span>⏳ Token wird geholt...</span>';
       });
@@ -1787,25 +1824,26 @@ IntegrationCell.Include = true</code></pre>
           if (display) {
             display.innerText = currentLiveToken;
           }
-          btns.forEach(b => {
+          liveBtns.forEach(b => {
+            b.classList.remove('loading');
             b.innerHTML = '<span>✓ Neuer Token erteilt!</span>';
-            setTimeout(() => { b.innerHTML = '<span>🔄 Token neu erzeugen</span>'; b.classList.remove('loading'); }, 2000);
+            setTimeout(() => { b.innerHTML = '<span>🔄 Token neu erzeugen</span>'; }, 2000);
           });
 
           // Automatisch in alle cURL Blöcke einsetzen!
           updateAllCurlTokens(currentLiveToken);
         } else {
           if (display) display.innerText = "Fehler: " + JSON.stringify(data);
-          btns.forEach(b => {
+          liveBtns.forEach(b => {
             b.classList.remove('loading');
-            b.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+            b.innerHTML = '<span>⚡ Backend Mock Token holen</span>';
           });
         }
       } catch (e) {
         if (display) display.innerText = "Netzwerkfehler: " + e.message;
-        btns.forEach(b => {
+        liveBtns.forEach(b => {
           b.classList.remove('loading');
-          b.innerHTML = '<span>⚡ OAuth 2.0 Bearer Token holen</span>';
+          b.innerHTML = '<span>⚡ Backend Mock Token holen</span>';
         });
       }
     }
@@ -1823,14 +1861,7 @@ IntegrationCell.Include = true</code></pre>
     }
 
     function copyLiveToken(btn) {
-      if (!currentLiveToken) {
-        alert("Bitte hole zuerst über den blauen Knopf einen Token!");
-        return;
-      }
-      navigator.clipboard.writeText(currentLiveToken).then(() => {
-        btn.innerText = "✓ Kopiert!";
-        setTimeout(() => { btn.innerText = "Token kopieren"; }, 2000);
-      });
+      copyToClipboard(currentLiveToken, btn);
     }
 
     function selectProtocol(protoId) {
@@ -1859,14 +1890,7 @@ IntegrationCell.Include = true</code></pre>
     function copyCode(btn) {
       const pre = btn.closest('.code-box').querySelector('pre code');
       if (!pre) return;
-      navigator.clipboard.writeText(pre.innerText).then(() => {
-        btn.innerText = "✓ Kopiert!";
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.innerText = "Kopieren";
-          btn.classList.remove('copied');
-        }, 2000);
-      });
+      copyToClipboard(pre.innerText, btn);
     }
 
     let globalApimHost = "https://<DEIN_APIM_HOST>";
