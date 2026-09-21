@@ -361,11 +361,13 @@ app.post('/oauth/token', (req, res) => {
   });
 });
 
-// OAuth2 Auth Middleware
+// OAuth2 Auth Middleware (Serverless-kompatibel & BTP Passthrough Support)
 function authenticateOAuth(req, res, next) {
   const authHeader = req.headers['authorization'];
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    const token = authHeader.substring(7);
+    const token = authHeader.substring(7).trim();
+
+    // 1. Lokaler In-Memory Token Store
     if (tokenStore.has(token)) {
       const info = tokenStore.get(token);
       if (Date.now() > info.expiresAt) {
@@ -378,6 +380,36 @@ function authenticateOAuth(req, res, next) {
       req.authMethod = 'Bearer';
       req.authInfo = info;
       return next();
+    }
+
+    // 2. Serverless Stateles-Fallback für lokal generierte Tokens
+    if (token.startsWith('btc_access_')) {
+      req.authMethod = 'Bearer (Mock Provider)';
+      req.authInfo = { clientId: 'btc-demo-client', scope: 'meter:read meter:write' };
+      return next();
+    }
+
+    // 3. Von SAP BTP / Integration Cell weitergeleitete XSUAA JWT-Tokens
+    if (token.startsWith('eyJ') && token.includes('.')) {
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+          if (payload.exp && (Date.now() / 1000) > payload.exp) {
+            return res.status(401).json({
+              error: 'token_expired',
+              error_description: 'Der BTP XSUAA JWT-Token ist abgelaufen.'
+            });
+          }
+          if (payload.iss && (payload.iss.includes('authentication') || payload.iss.includes('ondemand.com') || payload.client_id)) {
+            req.authMethod = 'Bearer (BTP XSUAA JWT)';
+            req.authInfo = { clientId: payload.client_id, scope: payload.scope };
+            return next();
+          }
+        }
+      } catch (e) {
+        // Fall through zu 401
+      }
     }
   }
 
