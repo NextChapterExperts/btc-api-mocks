@@ -85,6 +85,112 @@ function getBaseUrl(req) {
 setupOData(app, getBaseUrl, meterDatabase);
 
 // =============================================================
+// BTP INBOUND TOKEN & INTEGRATION CELL GATEWAY
+// =============================================================
+const BTP_DEFAULT_CONFIG = {
+  tokenUrl: process.env.BTP_TOKEN_URL || 'https://872f920dtrial.authentication.us10.hana.ondemand.com/oauth/token',
+  clientId: process.env.BTP_CLIENT_ID || 'sb-dh-3b72cd96-320d-4551-9fe8-9d9c6e30349a!b711904|it-rt-872f920dtrial!b26655',
+  clientSecret: process.env.BTP_CLIENT_SECRET || 'a8d3e87a-1e53-4f99-8620-44f7d9b443b4$CLkv5lmOWJUnk6wEKHgMmdJpPYEzrElVzw1wuvFE13o=',
+  icEndpoint: process.env.BTP_IC_ENDPOINT || 'https://872f920dtrial-d58ffe5a9522426e865d4e1cc662a85c.a.integration.cloud.sap/demo'
+};
+
+// Endpoint to fetch BTP XSUAA Inbound Token
+app.all('/api/btp/token', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const tokenUrl = req.body?.tokenUrl || req.query?.tokenUrl || BTP_DEFAULT_CONFIG.tokenUrl;
+  const clientId = req.body?.clientId || req.query?.clientId || BTP_DEFAULT_CONFIG.clientId;
+  const clientSecret = req.body?.clientSecret || req.query?.clientSecret || BTP_DEFAULT_CONFIG.clientSecret;
+
+  try {
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${basicAuth}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'grant_type=client_credentials'
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json({ error: 'BTP XSUAA Error', details: data });
+    }
+
+    return res.json({
+      access_token: data.access_token,
+      token_type: data.token_type || 'bearer',
+      expires_in: data.expires_in || 3599,
+      scope: data.scope,
+      jti: data.jti,
+      expires_at: new Date(Date.now() + (data.expires_in || 3599) * 1000).toISOString()
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to connect to BTP XSUAA', message: err.message });
+  }
+});
+
+// Endpoint to invoke BTP Integration Cell directly via proxy
+app.all('/api/btp/invoke', async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+
+  const endpointUrl = req.body?.endpointUrl || req.query?.endpointUrl || BTP_DEFAULT_CONFIG.icEndpoint;
+  let token = req.body?.token || req.query?.token;
+
+  try {
+    const startTime = Date.now();
+    if (!token) {
+      const basicAuth = Buffer.from(`${BTP_DEFAULT_CONFIG.clientId}:${BTP_DEFAULT_CONFIG.clientSecret}`).toString('base64');
+      const tokenResp = await fetch(BTP_DEFAULT_CONFIG.tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${basicAuth}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'grant_type=client_credentials'
+      });
+      const tokenData = await tokenResp.json();
+      token = tokenData.access_token;
+    }
+
+    const icResp = await fetch(endpointUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    const durationMs = Date.now() - startTime;
+    const contentType = icResp.headers.get('content-type') || '';
+    let responseData;
+    if (contentType.includes('application/json')) {
+      responseData = await icResp.json();
+    } else {
+      responseData = await icResp.text();
+    }
+
+    return res.json({
+      status: icResp.status,
+      statusText: icResp.statusText,
+      durationMs,
+      server: icResp.headers.get('server'),
+      correlationId: icResp.headers.get('x-correlationid') || icResp.headers.get('x-request-id'),
+      artifactType: icResp.headers.get('sap_artifacttype'),
+      data: responseData
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to invoke Integration Cell', message: err.message });
+  }
+});
+
+// =============================================================
 // 1. SCHNITTSTELLE 1: REST API (OpenAPI 3.0 & OAuth2)
 // =============================================================
 
@@ -859,18 +965,54 @@ app.get('/', (req, res) => {
 
     <div class="body-content">
 
-      <!-- DER INTERAKTIVE TOKEN GENERATOR KNOPF -->
+      <!-- DER INTERAKTIVE DUAL TOKEN GENERATOR (BTP INBOUND & MOCK OUTBOUND) -->
       <div class="token-generator-box">
         <div class="token-header-row">
-          <h4>🔐 Live OAuth 2.0 Token Cockpit</h4>
-          <button id="btnFetchToken" class="btn-token" onclick="fetchLiveToken()">
-            <span>⚡ OAuth 2.0 Bearer Token holen</span>
-          </button>
+          <h4>🔐 Live OAuth 2.0 Token Cockpit (BTP Inbound & Backend Outbound)</h4>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button id="btnFetchBtpToken" class="btn-token" style="background:#0A58CA;" onclick="fetchBtpInboundToken()">
+              <span>☁️ 1. BTP Inbound Token (XSUAA / Dev Hub)</span>
+            </button>
+            <button id="btnFetchToken" class="btn-token" style="background:#059669;" onclick="fetchLiveToken()">
+              <span>⚡ 2. Backend Mock Token (Outbound)</span>
+            </button>
+          </div>
         </div>
-        <div class="token-display-row">
-          <span id="tokenBadge" class="token-status-badge">Kein Token</span>
-          <code id="tokenDisplay">&lt;Klicke auf den blauen Knopf oben, um live einen echten Token anzufordern&gt;</code>
-          <button class="copy-btn" onclick="copyLiveToken(this)">Token kopieren</button>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:12px; margin-top:8px;">
+          <!-- BTP Inbound Token Display -->
+          <div style="background:white; border:1px solid #CBD5E1; border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:600; font-size:0.8rem; color:#0A58CA;">☁️ BTP Inbound Token (Konsument ➔ Integration Cell)</span>
+              <span id="btpTokenBadge" class="token-status-badge">Kein Token</span>
+            </div>
+            <code id="btpTokenDisplay" style="font-size:0.75rem; color:#334155; word-break:break-all; max-height:45px; overflow-y:auto;">&lt;Klicke oben auf '1. BTP Inbound Token', um XSUAA-Token abzurufen&gt;</code>
+            <div style="display:flex; gap:6px; margin-top:4px; flex-wrap:wrap;">
+              <button class="copy-btn" onclick="copyBtpToken(this)">Token kopieren</button>
+              <button class="btn-token" style="padding:3px 10px; font-size:0.75rem; background:#0284C7;" onclick="invokeIntegrationCellLive()">🚀 Integration Cell Live testen (/demo)</button>
+            </div>
+          </div>
+
+          <!-- Backend Mock Token Display -->
+          <div style="background:white; border:1px solid #CBD5E1; border-radius:6px; padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:600; font-size:0.8rem; color:#059669;">⚡ Backend Mock Token (Cell ➔ Vercel Backend)</span>
+              <span id="tokenBadge" class="token-status-badge">Kein Token</span>
+            </div>
+            <code id="tokenDisplay" style="font-size:0.75rem; color:#334155; word-break:break-all; max-height:45px; overflow-y:auto;">&lt;Klicke oben auf '2. Backend Mock Token', um Provider-Token zu generieren&gt;</code>
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <button class="copy-btn" onclick="copyLiveToken(this)">Token kopieren</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Response Box for Integration Cell Test -->
+        <div id="btpLiveResultBox" style="display:none; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:12px 14px; margin-top:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span id="btpLiveStatusBadge" style="font-weight:700; font-size:0.82rem; color:#38BDF8;">⏳ Aufruf läuft...</span>
+            <span id="btpLiveDuration" style="font-size:0.75rem; color:#94A3B8;"></span>
+          </div>
+          <pre style="margin:0; padding:0; max-height:220px; overflow-y:auto;"><code id="btpLiveCode" style="color:#A7F3D0; font-size:0.78rem;"></code></pre>
         </div>
       </div>
 
@@ -1320,6 +1462,113 @@ IntegrationCell.Include = true</code></pre>
 
   <script>
     let currentLiveToken = "";
+    let currentBtpToken = "";
+    let btpTimerInterval = null;
+
+    async function fetchBtpInboundToken() {
+      const btn = document.getElementById('btnFetchBtpToken');
+      const badge = document.getElementById('btpTokenBadge');
+      const display = document.getElementById('btpTokenDisplay');
+      if (btn) btn.innerHTML = '<span>⏳ BTP XSUAA abfragen...</span>';
+
+      try {
+        const res = await fetch('/api/btp/token');
+        const data = await res.json();
+        if (data.access_token) {
+          currentBtpToken = data.access_token;
+          if (display) display.innerText = currentBtpToken;
+          
+          let secondsLeft = data.expires_in || 3599;
+          if (badge) {
+            badge.classList.add('active');
+            badge.innerText = 'Gültig (' + secondsLeft + 's)';
+          }
+          if (btpTimerInterval) clearInterval(btpTimerInterval);
+          btpTimerInterval = setInterval(() => {
+            secondsLeft--;
+            if (secondsLeft <= 0) {
+              clearInterval(btpTimerInterval);
+              if (badge) badge.innerText = 'Abgelaufen';
+            } else if (badge) {
+              badge.innerText = 'Gültig (' + secondsLeft + 's)';
+            }
+          }, 1000);
+
+          if (btn) {
+            btn.innerHTML = '<span>✓ BTP Token aktiv!</span>';
+            setTimeout(() => { btn.innerHTML = '<span>🔄 BTP Token erneuern</span>'; }, 2000);
+          }
+
+          updateApimCurlWithBtpToken(currentBtpToken);
+        } else {
+          if (display) display.innerText = 'Fehler: ' + JSON.stringify(data);
+          if (btn) btn.innerHTML = '<span>☁️ 1. BTP Inbound Token (XSUAA)</span>';
+        }
+      } catch (err) {
+        if (display) display.innerText = 'Netzwerkfehler: ' + err.message;
+        if (btn) btn.innerHTML = '<span>☁️ 1. BTP Inbound Token (XSUAA)</span>';
+      }
+    }
+
+    function copyBtpToken(btn) {
+      if (!currentBtpToken) {
+        alert("Bitte hole zuerst über den blauen Knopf ein BTP Inbound Token!");
+        return;
+      }
+      navigator.clipboard.writeText(currentBtpToken).then(() => {
+        btn.innerText = "✓ Kopiert!";
+        setTimeout(() => { btn.innerText = "Token kopieren"; }, 2000);
+      });
+    }
+
+    async function invokeIntegrationCellLive() {
+      const resultBox = document.getElementById('btpLiveResultBox');
+      const statusBadge = document.getElementById('btpLiveStatusBadge');
+      const durationSpan = document.getElementById('btpLiveDuration');
+      const codeEl = document.getElementById('btpLiveCode');
+
+      resultBox.style.display = 'block';
+      statusBadge.style.color = '#38BDF8';
+      statusBadge.innerText = '⏳ Rufe BTP Integration Cell (/demo) auf...';
+      durationSpan.innerText = '';
+      codeEl.innerText = 'Verbinde mit Istio Envoy Gateway und K8s Worker-Pod...';
+
+      try {
+        const res = await fetch('/api/btp/invoke', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: currentBtpToken })
+        });
+        const data = await res.json();
+        if (data.status === 200) {
+          statusBadge.style.color = '#4ADE80';
+          statusBadge.innerText = '✅ HTTP ' + data.status + ' OK · Server: ' + (data.server || 'istio-envoy');
+          durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms · Artefakt: ' + (data.artifactType || 'api');
+          codeEl.innerText = JSON.stringify(data.data, null, 2);
+        } else {
+          statusBadge.style.color = '#F87171';
+          statusBadge.innerText = '❌ HTTP ' + data.status + ' ' + (data.statusText || 'Error');
+          durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
+          codeEl.innerText = JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        statusBadge.style.color = '#F87171';
+        statusBadge.innerText = '❌ Verbindungsfehler';
+        codeEl.innerText = err.message;
+      }
+    }
+
+    function updateApimCurlWithBtpToken(token) {
+      const ids = ['apimCurlRest', 'apimCurlODataV2All', 'apimCurlODataV2Filter', 'apimCurlODataV4All', 'apimCurlSoap'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerText = el.innerText
+            .replace(/Bearer\s+[a-zA-Z0-9_.-]+/g, 'Bearer ' + token)
+            .replace(/-H\s+"apikey:[^"]*"/g, '-H "Authorization: Bearer ' + token + '"');
+        }
+      });
+    }
 
     async function fetchLiveToken() {
       const btns = document.querySelectorAll('.btn-token');
