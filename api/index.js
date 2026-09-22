@@ -33,15 +33,34 @@ const CONFIG = {
 const tokenStore = new Map(); // token -> { expiresAt, clientId, scope }
 const refreshStore = new Map(); // refreshToken -> { clientId, scope }
 
-// In-Memory Request & Audit Log (Letzte 20 Aufrufe für Live-Monitoring & KRITIS-Nachweis)
-const auditLogs = [];
+// In-Memory Request & Audit Log (Mit /tmp/ File-Backing für Vercel Serverless Instanzen)
+const AUDIT_FILE = path.join('/tmp', 'btc_audit_logs.json');
+function loadAuditLogs() {
+  try {
+    if (fs.existsSync(AUDIT_FILE)) {
+      const data = JSON.parse(fs.readFileSync(AUDIT_FILE, 'utf8'));
+      if (Array.isArray(data)) return data;
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveAuditLogs(logs) {
+  try {
+    fs.writeFileSync(AUDIT_FILE, JSON.stringify(logs.slice(0, 30)), 'utf8');
+  } catch (e) {}
+}
+
+const auditLogs = loadAuditLogs();
 function recordAuditLog(entry) {
-  auditLogs.unshift({
+  const newLog = {
     id: 'req_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6),
     timestamp: new Date().toISOString(),
     ...entry
-  });
+  };
+  auditLogs.unshift(newLog);
   if (auditLogs.length > 30) auditLogs.pop();
+  saveAuditLogs(auditLogs);
 }
 
 // Demo Mock Data: Zählerstände (Energieversorger BTC / Oldenburg / EWE Netz)
@@ -208,10 +227,11 @@ app.all('/api/btp/token', async (req, res) => {
 app.get('/api/audit', (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
+  const currentLogs = loadAuditLogs();
   res.json({
-    totalLogs: auditLogs.length,
+    totalLogs: currentLogs.length,
     serverTime: new Date().toISOString(),
-    logs: auditLogs
+    logs: currentLogs
   });
 });
 
