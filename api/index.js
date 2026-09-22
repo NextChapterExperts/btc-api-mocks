@@ -2108,7 +2108,7 @@ IntegrationCell.Include = true</code></pre>
           'Content-Type': 'text/xml; charset=utf-8',
           'SOAPAction': 'http://btc.de/energy/metering/soap/GetMeterReading'
         },
-        body: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <btc:GetMeterReadingRequest>\n         <btc:MeterId>DE-OL-MTR-002</btc:MeterId>\n      </btc:GetMeterReadingRequest>\n   </soapenv:Body>\n</soapenv:Envelope>',
+        body: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap"><soapenv:Header/><soapenv:Body><btc:GetMeterReadingRequest><btc:MeterId>DE-OL-MTR-002</btc:MeterId></btc:GetMeterReadingRequest></soapenv:Body></soapenv:Envelope>',
         explanation: '<b>SOAP 1.1 Aufruf erfolgreich:</b> Der XML-Webservice hat den SOAP-Envelope und die SOAPAction verarbeitet und liefert valides SOAP-Response XML zurück.'
       }
     };
