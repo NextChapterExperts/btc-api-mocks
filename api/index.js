@@ -308,8 +308,8 @@ app.all('/api/btp/invoke', async (req, res) => {
         artifactType: isClassic ? 'apim-proxy' : 'cpi-iflow',
         data: {
           note: isClassic 
-            ? '💡 Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben!' 
-            : '💡 Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben!',
+            ? 'Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben.' 
+            : 'Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben.',
           d: {
             results: meterDatabase,
             count: meterDatabase.length,
@@ -359,8 +359,8 @@ app.all('/api/btp/invoke', async (req, res) => {
         artifactType: isClassic ? 'apim-proxy' : 'cpi-iflow',
         data: {
           note: isClassic 
-            ? '💡 Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben!' 
-            : '💡 Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben!',
+            ? 'Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben.' 
+            : 'Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben.',
           d: {
             results: meterDatabase,
             count: meterDatabase.length,
@@ -407,10 +407,10 @@ app.get('/docs', (req, res) => {
 </head>
 <body>
   <div class="topbar-nav">
-    <h1>⚡ Schnittstelle 1: REST & OAuth 2.0 (Swagger UI)</h1>
+    <h1>Schnittstelle 1: REST &amp; OAuth 2.0 (Swagger UI)</h1>
     <div>
-      <a href="/" style="margin-right: 18px;">🏠 Zurück zur Gesamtübersicht</a>
-      <a href="/openapi.json" target="_blank">📜 OpenAPI JSON</a>
+      <a href="/" style="margin-right: 18px;">Zurück zur Übersicht</a>
+      <a href="/openapi.json" target="_blank" rel="noopener noreferrer">OpenAPI JSON</a>
     </div>
   </div>
   <div id="swagger-ui"></div>
@@ -1073,6 +1073,16 @@ app.get('/', (req, res) => {
       border-color: #93C5FD;
       color: #084298;
     }
+    .btn-link.primary {
+      background: #0284C7;
+      color: #FFFFFF;
+      border-color: #0284C7;
+    }
+    .btn-link.primary:hover {
+      background: #0369A1;
+      border-color: #0369A1;
+      color: #FFFFFF;
+    }
 
     /* Tabs Header */
     .tabs-header {
@@ -1218,6 +1228,18 @@ app.get('/', (req, res) => {
       font-size: 0.8rem;
       word-break: break-all;
     }
+    .url-display-link {
+      color: #38BDF8;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.8rem;
+      word-break: break-all;
+      text-decoration: none;
+      flex: 1;
+    }
+    .url-display-link:hover {
+      color: #7DD3FC;
+      text-decoration: underline;
+    }
     .endpoint-meta {
       display: flex;
       flex-wrap: wrap;
@@ -1296,17 +1318,17 @@ app.get('/', (req, res) => {
     <div class="header">
       <div class="header-top">
         <div>
-          <h1>⚡ BTC Energy API Mock &amp; BTP Architecture Studio</h1>
+          <h1>BTC Energy API Mock &amp; BTP Architecture Studio</h1>
           <p>Interaktives Solution Cockpit für SAP Integration Suite, API Management &amp; Integration Cell</p>
         </div>
 
         <!-- 2-PERSPEKTIVEN UMSCHALTER -->
         <div class="studio-mode-switcher">
           <button id="btnModeMocks" class="mode-btn active" onclick="switchStudioMode('mocks')">
-            <span>🔌 1. Die 4 Mock-Schnittstellen</span>
+            <span>1. Mock-Schnittstellen (4 Protokolle)</span>
           </button>
           <button id="btnModeBtp" class="mode-btn" onclick="switchStudioMode('btp')">
-            <span>🏛️ 2. Die 3 BTP-Outbound-Architekturen</span>
+            <span>2. BTP-Outbound-Architekturen (3 Wege)</span>
           </button>
         </div>
       </div>
@@ -1327,7 +1349,7 @@ app.get('/', (req, res) => {
           <!-- 4 Schnittstellen Navigation Kacheln -->
           <div class="protocol-grid">
             <div class="protocol-card selected" onclick="selectProtocol('rest')">
-              <h3>1. REST &amp; OAuth2 <span class="badge">OpenAPI 3.0</span></h3>
+              <h3>1. REST &amp; OAuth 2.0 <span class="badge">OpenAPI 3.0</span></h3>
               <p>Smart Meter Lastgänge mit Client Credentials</p>
             </div>
             <div class="protocol-card" onclick="selectProtocol('odata-v2')">
@@ -1339,7 +1361,7 @@ app.get('/', (req, res) => {
               <p>CAP / RAP Entitäten &amp; flaches JSON</p>
             </div>
             <div class="protocol-card" onclick="selectProtocol('soap')">
-              <h3>4. Legacy SOAP <span class="badge">WSDL 1.1</span></h3>
+              <h3>4. Legacy SOAP 1.1 <span class="badge">WSDL 1.1</span></h3>
               <p>XML Web Service mit Envelope</p>
             </div>
           </div>
@@ -1348,7 +1370,7 @@ app.get('/', (req, res) => {
           <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:12px 16px; margin-bottom:18px;">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
               <div>
-                <b style="color:#166534; font-size:0.9rem;">🔐 Mock-Backend Direkttest (Schnellprüfung ohne Terminal)</b>
+                <b style="color:#166534; font-size:0.9rem;">Mock-Backend Direkttest (Schnellprüfung ohne Terminal)</b>
                 <div style="color:#475569; font-size:0.78rem;">Generiere ein echtes Provider-Token und teste die 4 Protokolle nativ:</div>
               </div>
               <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -1359,17 +1381,17 @@ app.get('/', (req, res) => {
                   <option value="soap">4. Legacy SOAP (/soap/utility - GetMeterReading)</option>
                 </select>
                 <button id="btnFetchToken" class="btn-token" style="background:#059669;" onclick="fetchLiveToken()">
-                  <span>⚡ Mock-Token holen</span>
+                  <span>Mock-Token abrufen</span>
                 </button>
                 <button id="btnInvokeMock" class="btn-token" style="background:#0D9488;" onclick="invokeMockLive()">
-                  <span>🚀 Testen</span>
+                  <span>Ausführen</span>
                 </button>
               </div>
             </div>
 
             <div style="display:flex; align-items:center; gap:8px; margin-top:10px; background:white; border:1px solid #BBF7D0; border-radius:6px; padding:5px 10px;">
               <span style="font-size:0.73rem; font-weight:700; color:#059669; white-space:nowrap;">Aktiver Bearer:</span>
-              <code id="tokenDisplay" style="flex:1; font-size:0.75rem; color:#334155; word-break:break-all;">&lt;Klicke auf 'Mock-Token holen'&gt;</code>
+              <code id="tokenDisplay" style="flex:1; font-size:0.75rem; color:#334155; word-break:break-all;">&lt;Klicke auf 'Mock-Token abrufen'&gt;</code>
               <span id="tokenBadge" class="token-status-badge">Kein Token</span>
               <button class="copy-btn" onclick="copyLiveToken(this)">Kopieren</button>
             </div>
@@ -1377,7 +1399,7 @@ app.get('/', (req, res) => {
             <!-- Live Result Box for Mock Call -->
             <div id="mockLiveResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:10px 12px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                <span id="mockLiveStatusBadge" style="font-weight:700; font-size:0.78rem; color:#4ADE80;">✅ HTTP 200 OK</span>
+                <span id="mockLiveStatusBadge" style="font-weight:700; font-size:0.78rem; color:#4ADE80;">HTTP 200 OK</span>
                 <span id="mockLiveDuration" style="font-size:0.72rem; color:#94A3B8;"></span>
               </div>
               <pre style="margin:0; padding:0; max-height:160px; overflow-y:auto;"><code id="mockLiveCode" style="color:#A7F3D0; font-size:0.73rem;"></code></pre>
@@ -1394,27 +1416,30 @@ app.get('/', (req, res) => {
                   OpenAPI 3.0.3 Spezifikation für 15-Minuten Lastgänge (Smart Meter Rollout).
                 </div>
                 <div style="display:flex; gap:6px;">
-                  <a href="/docs" target="_blank" class="btn-link" style="background:#0284C7; color:white;">📖 Swagger UI</a>
-                  <a href="/openapi.json" target="_blank" class="btn-link">📜 OpenAPI JSON</a>
+                  <a href="/docs" target="_blank" rel="noopener noreferrer" class="btn-link primary">Swagger UI</a>
+                  <a href="/openapi.json" target="_blank" rel="noopener noreferrer" class="btn-link">OpenAPI JSON</a>
                 </div>
               </div>
             </div>
 
             <div class="tabs-header">
-              <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">🌐 1. Endpunkte &amp; URLs</button>
-              <button class="tab-btn" onclick="switchInnerTab('rest', 'dest')">⚙️ 2. BTP Destination</button>
-              <button class="tab-btn" onclick="switchInnerTab('rest', 'arch')">🏛️ 3. Architektur-Blueprint</button>
+              <button class="tab-btn active" onclick="switchInnerTab('rest', 'direct')">1. Endpunkte &amp; URLs</button>
+              <button class="tab-btn" onclick="switchInnerTab('rest', 'dest')">2. BTP Destination</button>
+              <button class="tab-btn" onclick="switchInnerTab('rest', 'arch')">3. Architektur-Blueprint</button>
             </div>
 
             <div id="rest-direct" class="tab-pane active">
               <div class="endpoint-card">
                 <div class="endpoint-header-row">
                   <div class="endpoint-title"><span class="method-badge badge-post">POST</span><span>OAuth Token Service</span></div>
-                  <button class="btn-sm-action primary" onclick="fetchLiveToken()">⚡ Token holen</button>
+                  <button class="btn-sm-action primary" onclick="fetchLiveToken()">Token abrufen</button>
                 </div>
                 <div class="url-display-bar">
-                  <span class="url-display-text">${hostUrl}/oauth/token</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/oauth/token', this)">Kopieren</button>
+                  <a href="${hostUrl}/oauth/token" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/oauth/token</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/oauth/token" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/oauth/token', this)">Kopieren</button>
+                  </div>
                 </div>
                 <div class="endpoint-meta">
                   <span>Body:</span>
@@ -1427,8 +1452,11 @@ app.get('/', (req, res) => {
                   <div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>Zählerdaten abrufen (/api/v1/smartmeters)</span></div>
                 </div>
                 <div class="url-display-bar">
-                  <span class="url-display-text">${hostUrl}/api/v1/smartmeters</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/api/v1/smartmeters', this)">Kopieren</button>
+                  <a href="${hostUrl}/api/v1/smartmeters" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/api/v1/smartmeters</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/api/v1/smartmeters" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/api/v1/smartmeters', this)">Kopieren</button>
+                  </div>
                 </div>
                 <div class="endpoint-meta">
                   <span>Header:</span>
@@ -1469,29 +1497,35 @@ IntegrationCell.Include = true</code></pre>
                   Klassischer IS-U Messdaten-Service mit vollständigem EDMX <code>$metadata</code> Katalog.
                 </div>
                 <div style="display:flex; gap:6px;">
-                  <a href="/odata/v2/utility/$metadata" target="_blank" class="btn-link" style="background:#0284C7; color:white;">📜 EDMX $metadata</a>
+                  <a href="/odata/v2/utility/$metadata" target="_blank" rel="noopener noreferrer" class="btn-link primary">EDMX $metadata</a>
                 </div>
               </div>
             </div>
 
             <div class="tabs-header">
-              <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">🌐 1. Endpunkte &amp; URLs</button>
-              <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'dest')">⚙️ 2. BTP Destination</button>
+              <button class="tab-btn active" onclick="switchInnerTab('odata-v2', 'direct')">1. Endpunkte &amp; URLs</button>
+              <button class="tab-btn" onclick="switchInnerTab('odata-v2', 'dest')">2. BTP Destination</button>
             </div>
 
             <div id="odata-v2-direct" class="tab-pane active">
               <div class="endpoint-card">
                 <div class="endpoint-header-row"><div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>$metadata EDMX</span></div></div>
                 <div class="url-display-bar">
-                  <span class="url-display-text">${hostUrl}/odata/v2/utility/$metadata</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/odata/v2/utility/$metadata', this)">Kopieren</button>
+                  <a href="${hostUrl}/odata/v2/utility/$metadata" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/odata/v2/utility/$metadata</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/odata/v2/utility/$metadata" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/odata/v2/utility/$metadata', this)">Kopieren</button>
+                  </div>
                 </div>
               </div>
               <div class="endpoint-card">
                 <div class="endpoint-header-row"><div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>EntitySet: MeterReadingSet</span></div></div>
                 <div class="url-display-bar">
-                  <span class="url-display-text">${hostUrl}/odata/v2/utility/MeterReadingSet</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/odata/v2/utility/MeterReadingSet', this)">Kopieren</button>
+                  <a href="${hostUrl}/odata/v2/utility/MeterReadingSet" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/odata/v2/utility/MeterReadingSet</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/odata/v2/utility/MeterReadingSet" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/odata/v2/utility/MeterReadingSet', this)">Kopieren</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1520,22 +1554,25 @@ IntegrationCell.Include = true</code></pre>
                   Moderne OASIS OData v4 Entitäten mit flacher, KI-effizienter JSON-Struktur.
                 </div>
                 <div style="display:flex; gap:6px;">
-                  <a href="/odata/v4/utility/$metadata" target="_blank" class="btn-link" style="background:#0284C7; color:white;">📜 OData v4 $metadata</a>
+                  <a href="/odata/v4/utility/$metadata" target="_blank" rel="noopener noreferrer" class="btn-link primary">OData v4 $metadata</a>
                 </div>
               </div>
             </div>
 
             <div class="tabs-header">
-              <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">🌐 1. Endpunkte &amp; URLs</button>
-              <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'dest')">⚙️ 2. BTP Destination</button>
+              <button class="tab-btn active" onclick="switchInnerTab('odata-v4', 'direct')">1. Endpunkte &amp; URLs</button>
+              <button class="tab-btn" onclick="switchInnerTab('odata-v4', 'dest')">2. BTP Destination</button>
             </div>
 
             <div id="odata-v4-direct" class="tab-pane active">
               <div class="endpoint-card">
                 <div class="endpoint-header-row"><div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>EntitySet: MeterReadings</span></div></div>
                 <div class="url-display-bar">
-                  <span class="url-display-text">${hostUrl}/odata/v4/utility/MeterReadings</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/odata/v4/utility/MeterReadings', this)">Kopieren</button>
+                  <a href="${hostUrl}/odata/v4/utility/MeterReadings" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/odata/v4/utility/MeterReadings</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/odata/v4/utility/MeterReadings" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/odata/v4/utility/MeterReadings', this)">Kopieren</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1564,22 +1601,25 @@ IntegrationCell.Include = true</code></pre>
                   Klassischer XML Web Service mit SOAP-Envelope und WSDL 1.1 Spezifikation.
                 </div>
                 <div style="display:flex; gap:6px;">
-                  <a href="/soap/utility?wsdl" target="_blank" class="btn-link" style="background:#0284C7; color:white;">📜 WSDL herunterladen</a>
+                  <a href="/soap/utility?wsdl" target="_blank" rel="noopener noreferrer" class="btn-link primary">WSDL herunterladen</a>
                 </div>
               </div>
             </div>
 
             <div class="tabs-header">
-              <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">🌐 1. Endpunkte &amp; URLs</button>
-              <button class="tab-btn" onclick="switchInnerTab('soap', 'dest')">⚙️ 2. BTP Destination</button>
+              <button class="tab-btn active" onclick="switchInnerTab('soap', 'direct')">1. Endpunkte &amp; URLs</button>
+              <button class="tab-btn" onclick="switchInnerTab('soap', 'dest')">2. BTP Destination</button>
             </div>
 
             <div id="soap-direct" class="tab-pane active">
               <div class="endpoint-card">
                 <div class="endpoint-header-row"><div class="endpoint-title"><span class="method-badge badge-post">POST</span><span>SOAP Action: GetMeterReading</span></div></div>
                 <div class="url-display-bar">
-                  <span class="url-display-text">${hostUrl}/soap/utility</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/soap/utility', this)">Kopieren</button>
+                  <a href="${hostUrl}/soap/utility" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/soap/utility</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/soap/utility" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/soap/utility', this)">Kopieren</button>
+                  </div>
                 </div>
                 <div class="endpoint-meta">
                   <span>SOAPAction:</span>
@@ -1609,9 +1649,9 @@ IntegrationCell.Include = true</code></pre>
         <!-- ========================================== -->
         <div id="studio-view-btp" style="display:none;">
           <div class="note note-purple" style="margin-bottom:18px;">
-            <b style="font-size:0.95rem;">🏛️ Die 3 SAP BTP Architekturpfade für Outbound-OAuth Backend-Schutz</b><br/>
+            <b style="font-size:0.95rem;">Die 3 SAP BTP Architekturpfade für Outbound-OAuth Backend-Schutz</b><br/>
             Wähle einen Pfad, beziehe das Gateway- bzw. Runtime-Token und löse den autorisierten Backend-Durchstich aus. 
-            Im rechten Wire-Tap siehst du synchron in Echtzeit, mit welcher Identität der Request ankommt!
+            Im rechten Wire-Tap siehst du synchron in Echtzeit, mit welcher Identität der Request ankommt.
           </div>
 
           <div class="arch-3col-grid">
@@ -1625,7 +1665,7 @@ IntegrationCell.Include = true</code></pre>
                   </span>
                   <span id="btpApimTokenBadge" class="token-status-badge">Kein Token</span>
                 </div>
-                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#1E293B;">🚀 Weg 1: Klassisch APIM Nativ</h3>
+                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#1E293B;">Weg 1: Klassisch APIM Nativ</h3>
                 <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
                   Reine APIM-Laufzeit. Token-Caching im RAM via KVM &amp; Hilfsproxy (<code>/get/oauth</code>). Keine CPI-Abhängigkeit.
                 </p>
@@ -1636,29 +1676,38 @@ IntegrationCell.Include = true</code></pre>
                   <div><b>Aufwand:</b> 12–16 Std. (XML-Policies)</div>
                 </div>
 
+                <!-- Ziel-Endpoint -->
+                <div style="margin-bottom:8px;">
+                  <div style="font-size:0.72rem; font-weight:600; color:#475569; margin-bottom:2px;">BTP Gateway Ziel:</div>
+                  <div class="url-display-bar">
+                    <a href="${BTP_CREDENTIALS.apim_classic.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.apim_classic.endpoint}</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.apim_classic.endpoint}', this)">Kopieren</button>
+                  </div>
+                </div>
+
                 <!-- Token Display -->
                 <div style="margin-bottom:10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
                     <span style="font-size:0.72rem; font-weight:600; color:#475569;">Bearer Token:</span>
                     <button class="copy-btn" onclick="copyBtpToken('apim_classic', this)">Kopieren</button>
                   </div>
-                  <code id="btpApimTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token holen'&gt;</code>
+                  <code id="btpApimTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
                 </div>
               </div>
 
               <div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
                   <button id="btnFetchApimToken" class="btn-token" style="background:#475569;" onclick="fetchBtpToken('apim_classic')">
-                    <span>⚡ 1. Token holen</span>
+                    <span>1. Token abrufen</span>
                   </button>
                   <button id="btnInvokeApim" class="btn-token" style="background:#334155;" onclick="invokeBtp('apim_classic')">
-                    <span>🚀 2. Testen</span>
+                    <span>2. Testen</span>
                   </button>
                 </div>
 
                 <div id="btpApimResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span id="btpApimStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">✅ HTTP 200 OK</span>
+                    <span id="btpApimStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
                     <span id="btpApimDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
                   </div>
                   <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpApimCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
@@ -1676,7 +1725,7 @@ IntegrationCell.Include = true</code></pre>
                   </span>
                   <span id="btpHybridTokenBadge" class="token-status-badge">Kein Token</span>
                 </div>
-                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0369A1;">⚙️ Weg 2: Hybrid APIM + iFlow</h3>
+                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0369A1;">Weg 2: Hybrid APIM + iFlow</h3>
                 <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
                   Funktionstrennung: Governance im APIM, Konnektivität &amp; BTP Security Material im Shared CPI-iFlow.
                 </p>
@@ -1687,29 +1736,38 @@ IntegrationCell.Include = true</code></pre>
                   <div><b>Aufwand:</b> 8–12 Std. (Groovy &amp; Flow)</div>
                 </div>
 
+                <!-- Ziel-Endpoint -->
+                <div style="margin-bottom:8px;">
+                  <div style="font-size:0.72rem; font-weight:600; color:#475569; margin-bottom:2px;">BTP CPI Ziel:</div>
+                  <div class="url-display-bar">
+                    <a href="${BTP_CREDENTIALS.apim_hybrid.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.apim_hybrid.endpoint}</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.apim_hybrid.endpoint}', this)">Kopieren</button>
+                  </div>
+                </div>
+
                 <!-- Token Display -->
                 <div style="margin-bottom:10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
                     <span style="font-size:0.72rem; font-weight:600; color:#475569;">Bearer Token:</span>
                     <button class="copy-btn" onclick="copyBtpToken('apim_hybrid', this)">Kopieren</button>
                   </div>
-                  <code id="btpHybridTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token holen'&gt;</code>
+                  <code id="btpHybridTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
                 </div>
               </div>
 
               <div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
                   <button id="btnFetchHybridToken" class="btn-token" style="background:#0284C7;" onclick="fetchBtpToken('apim_hybrid')">
-                    <span>⚡ 1. Token holen</span>
+                    <span>1. Token abrufen</span>
                   </button>
                   <button id="btnInvokeHybrid" class="btn-token" style="background:#0369A1;" onclick="invokeBtp('apim_hybrid')">
-                    <span>🚀 2. Testen</span>
+                    <span>2. Testen</span>
                   </button>
                 </div>
 
                 <div id="btpHybridResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span id="btpHybridStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">✅ HTTP 200 OK</span>
+                    <span id="btpHybridStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
                     <span id="btpHybridDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
                   </div>
                   <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpHybridCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
@@ -1727,7 +1785,7 @@ IntegrationCell.Include = true</code></pre>
                   </span>
                   <span id="btpDevTokenBadge" class="token-status-badge">Kein Token</span>
                 </div>
-                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0A58CA;">⚡ Weg 3: Integration Cell</h3>
+                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0A58CA;">Weg 3: Integration Cell</h3>
                 <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
                   Modernes API-Artefakt auf K8s Edge Gateway. Destination delegiert OAuth vollautomatisch. Developer Hub Key Inbound.
                 </p>
@@ -1738,32 +1796,41 @@ IntegrationCell.Include = true</code></pre>
                   <div><b>Aufwand:</b> 3–5 Std. (Zero Code!)</div>
                 </div>
 
+                <!-- Ziel-Endpoint -->
+                <div style="margin-bottom:8px;">
+                  <div style="font-size:0.72rem; font-weight:600; color:#166534; margin-bottom:2px;">Integration Cell Live Endpoint:</div>
+                  <div class="url-display-bar">
+                    <a href="${BTP_CREDENTIALS.devhub.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.devhub.endpoint}</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.devhub.endpoint}', this)">Kopieren</button>
+                  </div>
+                </div>
+
                 <!-- Token Display -->
                 <div style="margin-bottom:10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
                     <span style="font-size:0.72rem; font-weight:600; color:#475569;">Developer Key Token:</span>
                     <button class="copy-btn" onclick="copyBtpToken('devhub', this)">Kopieren</button>
                   </div>
-                  <code id="btpDevTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token holen'&gt;</code>
+                  <code id="btpDevTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
                 </div>
               </div>
 
               <div>
                 <div style="display:flex; gap:6px; flex-wrap:wrap;">
                   <button id="btnFetchDevToken" class="btn-token" style="background:#0A58CA;" onclick="fetchBtpToken('devhub')">
-                    <span>⚡ 1. Token holen</span>
+                    <span>1. Token abrufen</span>
                   </button>
                   <button id="btnInvokeDev" class="btn-token" style="background:#0284C7;" onclick="invokeBtp('devhub')">
-                    <span>🚀 2. Testen (/demo)</span>
+                    <span>2. Testen (/demo)</span>
                   </button>
                   <button id="btnInvokeSvc" class="btn-token" style="background:#64748B;" onclick="invokeBtp('servicekey')" title="Testet mit generischem Service Key ohne Produkt-Subskription">
-                    <span>⚠️ Service Key Test</span>
+                    <span>Service Key Test</span>
                   </button>
                 </div>
 
                 <div id="btpDevResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span id="btpDevStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">✅ HTTP 200 OK</span>
+                    <span id="btpDevStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
                     <span id="btpDevDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
                   </div>
                   <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpDevCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
@@ -1784,25 +1851,25 @@ IntegrationCell.Include = true</code></pre>
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
           <div>
             <h3 style="margin:0; font-size:0.95rem; color:#0A3D62; display:flex; align-items:center; gap:6px;">
-              <span>📡 Live Wire-Tap Telemetrie</span>
+              <span>Live Wire-Tap Telemetrie</span>
             </h3>
             <div style="font-size:0.72rem; color:#64748B; margin-top:2px;">
               KRITIS Access Log (BSI C5 &amp; NIS-2)
             </div>
           </div>
           <button class="btn-sm-action" onclick="refreshAuditLogs()" title="Aktualisieren">
-            <span>🔄 Refresh</span>
+            <span>Aktualisieren</span>
           </button>
         </div>
 
         <div style="font-size:0.74rem; color:#475569; background:#EFF6FF; border:1px solid #BFDBFE; border-radius:6px; padding:8px 10px; line-height:1.4;">
-          💡 <b>Zero Tab-Switching:</b> Jeder Klick links schlägt synchron hier rechts auf. Beobachte Client-ID, Token-Preview und HTTP-Status in Echtzeit!
+          <b>Synchrones Monitoring:</b> Jeder Klick links schlägt synchron hier rechts auf. Beobachte Client-ID, Token-Preview und HTTP-Status in Echtzeit.
         </div>
 
         <!-- Wire-Tap Log Container -->
         <div id="auditLogFeed" style="display:flex; flex-direction:column; gap:8px; overflow-y:auto; max-height:calc(100vh - 310px); padding-right:4px;">
           <div style="text-align:center; padding:20px 10px; color:#64748B; font-size:0.76rem;">
-            ⏳ Warte auf eingehende Aufrufe...
+            Warte auf eingehende Aufrufe... Klicke links auf einen Testbutton.
           </div>
         </div>
 
@@ -1854,7 +1921,7 @@ IntegrationCell.Include = true</code></pre>
 
       if (btn) {
         btn.classList.add('loading');
-        btn.innerHTML = '<span>⏳ XSUAA...</span>';
+        btn.innerHTML = '<span>XSUAA...</span>';
       }
 
       try {
@@ -1882,21 +1949,21 @@ IntegrationCell.Include = true</code></pre>
 
           if (btn) {
             btn.classList.remove('loading');
-            btn.innerHTML = '<span>✓ Token aktiv!</span>';
-            setTimeout(() => { btn.innerHTML = '<span>🔄 Token neu</span>'; }, 2000);
+            btn.innerHTML = '<span>Token aktiv</span>';
+            setTimeout(() => { btn.innerHTML = '<span>Token neu</span>'; }, 2000);
           }
         } else {
           if (display) display.innerText = 'Fehler: ' + JSON.stringify(data);
           if (btn) {
             btn.classList.remove('loading');
-            btn.innerHTML = '<span>⚡ Token holen</span>';
+            btn.innerHTML = '<span>Token abrufen</span>';
           }
         }
       } catch (err) {
         if (display) display.innerText = 'Netzwerkfehler: ' + err.message;
         if (btn) {
           btn.classList.remove('loading');
-          btn.innerHTML = '<span>⚡ Token holen</span>';
+          btn.innerHTML = '<span>Token abrufen</span>';
         }
       }
     }
@@ -1942,7 +2009,7 @@ IntegrationCell.Include = true</code></pre>
       if (resultBox) resultBox.style.display = 'block';
       if (statusBadge) {
         statusBadge.style.color = '#38BDF8';
-        statusBadge.innerText = '⏳ Rufe BTP Suite auf...';
+        statusBadge.innerText = 'Sende Request an BTP Suite...';
       }
 
       try {
@@ -1956,17 +2023,17 @@ IntegrationCell.Include = true</code></pre>
         if (data.status === 200) {
           if (statusBadge) {
             statusBadge.style.color = '#4ADE80';
-            statusBadge.innerText = '✅ HTTP ' + data.status + ' OK · ' + (data.server || 'bpt-runtime');
+            statusBadge.innerText = 'HTTP ' + data.status + ' OK · ' + (data.server || 'btp-runtime');
           }
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data, null, 2);
           if (explanation) {
             if (type === 'devhub') {
-              explanation.innerHTML = '💡 <b>Weg 3 Erfolg (Integration Cell):</b> Token autorisiert, Developer Key gebunden! Der Aufruf schlägt im rechten Wire-Tap auf.';
+              explanation.innerHTML = '<b>Weg 3 Erfolg (Integration Cell):</b> Token autorisiert, Developer Key gebunden! Der Aufruf schlägt im rechten Wire-Tap auf.';
             } else if (type === 'apim_classic') {
-              explanation.innerHTML = '💡 <b>Weg 1 Erfolg (Klassisch APIM):</b> KVM-Credentials geladen, Token aus RAM gecacht und Backend per Bearer erreicht!';
+              explanation.innerHTML = '<b>Weg 1 Erfolg (Klassisch APIM):</b> KVM-Credentials geladen, Token aus RAM gecacht und Backend per Bearer erreicht.';
             } else if (type === 'apim_hybrid') {
-              explanation.innerHTML = '💡 <b>Weg 2 Erfolg (Hybrid APIM + CPI):</b> Token über Shared iFlow aus BTP Keystore bezogen und autorisiert weitergereicht!';
+              explanation.innerHTML = '<b>Weg 2 Erfolg (Hybrid APIM + CPI):</b> Token über Shared iFlow aus BTP Keystore bezogen und autorisiert weitergereicht.';
             }
           }
           addClientAuditLog({
@@ -1980,11 +2047,11 @@ IntegrationCell.Include = true</code></pre>
         } else if (data.status === 403) {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
-            statusBadge.innerText = '❌ HTTP ' + data.status + ' Forbidden';
+            statusBadge.innerText = 'HTTP ' + data.status + ' Forbidden';
           }
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data, null, 2);
-          if (explanation) explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Ohne Developer Hub Produkt-Subskription verweigert die Integration Cell den Service Key mit 403!';
+          if (explanation) explanation.innerHTML = '<b>Didaktischer Aha-Effekt:</b> Ohne Developer Hub Produkt-Subskription verweigert die Integration Cell den Service Key mit 403!';
           addClientAuditLog({
             status: 403,
             client: 'sb-f581317a (Service Key ohne Subskription)',
@@ -1996,7 +2063,7 @@ IntegrationCell.Include = true</code></pre>
         } else {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
-            statusBadge.innerText = '❌ HTTP ' + (data.status || '500');
+            statusBadge.innerText = 'HTTP ' + (data.status || '500');
           }
           if (codeEl) codeEl.innerText = JSON.stringify(data.data || data, null, 2);
         }
@@ -2005,7 +2072,7 @@ IntegrationCell.Include = true</code></pre>
       } catch (err) {
         if (statusBadge) {
           statusBadge.style.color = '#F87171';
-          statusBadge.innerText = '❌ Fehler';
+          statusBadge.innerText = 'Fehler: ' + err.message;
         }
         if (codeEl) codeEl.innerText = err.message;
       }
@@ -2017,21 +2084,21 @@ IntegrationCell.Include = true</code></pre>
         method: 'GET',
         url: '/api/v1/smartmeters',
         headers: { 'Accept': 'application/json' },
-        explanation: '💡 <b>REST-Aufruf erfolgreich:</b> Das Mock-Backend hat das Bearer-Token autorisiert und liefert die 4 Zähler-Datensätze als JSON nach OpenAPI 3.0 Spezifikation.'
+        explanation: '<b>REST-Aufruf erfolgreich:</b> Das Mock-Backend hat das Bearer-Token autorisiert und liefert die 4 Zähler-Datensätze als JSON nach OpenAPI 3.0 Spezifikation.'
       },
       'odata-v2': {
         name: 'SAP OData v2 Service',
         method: 'GET',
         url: '/odata/v2/utility/MeterReadingSet',
         headers: { 'Accept': 'application/json' },
-        explanation: '💡 <b>OData v2 Aufruf erfolgreich:</b> Der native IS-U Utility Service antwortet im standardisierten OData v2 JSON-Format (EntitySet <code>MeterReadingSet</code>).'
+        explanation: '<b>OData v2 Aufruf erfolgreich:</b> Der native IS-U Utility Service antwortet im standardisierten OData v2 JSON-Format (EntitySet <code>MeterReadingSet</code>).'
       },
       'odata-v4': {
         name: 'SAP OData v4 Service',
         method: 'GET',
         url: '/odata/v4/utility/MeterReadings',
         headers: { 'Accept': 'application/json' },
-        explanation: '💡 <b>OData v4 Aufruf erfolgreich:</b> Moderner RAP/CAP Service mit flachem OASIS OData v4 JSON (inkl. <code>@odata.context</code> und <code>value</code>).'
+        explanation: '<b>OData v4 Aufruf erfolgreich:</b> Moderner RAP/CAP Service mit flachem OASIS OData v4 JSON (inkl. <code>@odata.context</code> und <code>value</code>).'
       },
       'soap': {
         name: 'Legacy SOAP 1.1 Web Service',
@@ -2042,7 +2109,7 @@ IntegrationCell.Include = true</code></pre>
           'SOAPAction': 'http://btc.de/energy/metering/soap/GetMeterReading'
         },
         body: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <btc:GetMeterReadingRequest>\n         <btc:MeterId>DE-OL-MTR-002</btc:MeterId>\n      </btc:GetMeterReadingRequest>\n   </soapenv:Body>\n</soapenv:Envelope>',
-        explanation: '💡 <b>SOAP 1.1 Aufruf erfolgreich:</b> Der XML-Webservice hat den SOAP-Envelope und die SOAPAction verarbeitet und liefert valides SOAP-Response XML zurück.'
+        explanation: '<b>SOAP 1.1 Aufruf erfolgreich:</b> Der XML-Webservice hat den SOAP-Envelope und die SOAPAction verarbeitet und liefert valides SOAP-Response XML zurück.'
       }
     };
 
@@ -2068,7 +2135,7 @@ IntegrationCell.Include = true</code></pre>
       if (resultBox) resultBox.style.display = 'block';
       if (statusBadge) {
         statusBadge.style.color = '#38BDF8';
-        statusBadge.innerText = '⏳ Sende nativen Request...';
+        statusBadge.innerText = 'Sende Request...';
       }
       if (endpointSpan) endpointSpan.innerText = config.method + ' ' + config.url;
       if (durationSpan) durationSpan.innerText = '';
@@ -2079,7 +2146,7 @@ IntegrationCell.Include = true</code></pre>
 
       try {
         if (!currentLiveToken) {
-          if (statusBadge) statusBadge.innerText = '⏳ Hole zuerst Provider-Token...';
+          if (statusBadge) statusBadge.innerText = 'Hole zuerst Provider-Token...';
           await fetchLiveToken();
         }
 
@@ -2110,7 +2177,7 @@ IntegrationCell.Include = true</code></pre>
         if (res.ok) {
           if (statusBadge) {
             statusBadge.style.color = '#4ADE80';
-            statusBadge.innerText = '✅ HTTP ' + res.status + ' ' + (res.statusText || 'OK');
+            statusBadge.innerText = 'HTTP ' + res.status + ' ' + (res.statusText || 'OK');
           }
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
           if (codeEl) codeEl.innerText = displayData;
@@ -2126,11 +2193,11 @@ IntegrationCell.Include = true</code></pre>
         } else {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
-            statusBadge.innerText = '❌ HTTP ' + res.status + ' ' + (res.statusText || 'Error');
+            statusBadge.innerText = 'HTTP ' + res.status + ' ' + (res.statusText || 'Error');
           }
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
           if (codeEl) codeEl.innerText = displayData;
-          if (explanation) explanation.innerHTML = '⚠️ Das Mock-Backend meldete einen Fehler: Bitte überprüfe das Bearer-Token.';
+          if (explanation) explanation.innerHTML = 'Das Mock-Backend meldete einen Fehler: Bitte überprüfe das Bearer-Token.';
           addClientAuditLog({
             status: res.status,
             client: 'Mock Direct Client (Browser)',
@@ -2145,7 +2212,7 @@ IntegrationCell.Include = true</code></pre>
         if (btn) btn.classList.remove('loading');
         if (statusBadge) {
           statusBadge.style.color = '#F87171';
-          statusBadge.innerText = '❌ Verbindungsfehler';
+          statusBadge.innerText = 'Verbindungsfehler: ' + err.message;
         }
         if (codeEl) codeEl.innerText = err.message;
         if (explanation) explanation.innerText = '';
@@ -2159,7 +2226,7 @@ IntegrationCell.Include = true</code></pre>
       
       liveBtns.forEach(b => {
         b.classList.add('loading');
-        b.innerHTML = '<span>⏳ Token wird geholt...</span>';
+        b.innerHTML = '<span>Token wird geholt...</span>';
       });
 
       try {
@@ -2181,21 +2248,21 @@ IntegrationCell.Include = true</code></pre>
           }
           liveBtns.forEach(b => {
             b.classList.remove('loading');
-            b.innerHTML = '<span>✓ Neuer Token erteilt!</span>';
-            setTimeout(() => { b.innerHTML = '<span>🔄 Token neu erzeugen</span>'; }, 2000);
+            b.innerHTML = '<span>Token aktiv</span>';
+            setTimeout(() => { b.innerHTML = '<span>Token neu</span>'; }, 2000);
           });
         } else {
           if (display) display.innerText = "Fehler: " + JSON.stringify(data);
           liveBtns.forEach(b => {
             b.classList.remove('loading');
-            b.innerHTML = '<span>⚡ Mock-Token holen</span>';
+            b.innerHTML = '<span>Token abrufen</span>';
           });
         }
       } catch (e) {
         if (display) display.innerText = "Netzwerkfehler: " + e.message;
         liveBtns.forEach(b => {
           b.classList.remove('loading');
-          b.innerHTML = '<span>⚡ Mock-Token holen</span>';
+          b.innerHTML = '<span>Token abrufen</span>';
         });
       }
     }
@@ -2287,7 +2354,7 @@ IntegrationCell.Include = true</code></pre>
       if (totalText) totalText.innerText = logs.length + ' Events';
 
       if (logs.length === 0) {
-        feed.innerHTML = '<div style="text-align:center; padding:20px 10px; color:#64748B; font-size:0.76rem;">⏳ Noch keine Events erfasst. Klicke links auf einen Testbutton!</div>';
+        feed.innerHTML = '<div style="text-align:center; padding:20px 10px; color:#64748B; font-size:0.76rem;">Noch keine Events erfasst. Klicke links auf einen Testbutton.</div>';
         return;
       }
 
@@ -2302,8 +2369,8 @@ IntegrationCell.Include = true</code></pre>
             '<span style="font-weight:700; font-family:monospace; color:#475569;">' + timeStr + '</span>' +
             '<span style="background:' + statusBg + '; color:' + statusColor + '; padding:1px 5px; border-radius:4px; font-weight:700; font-size:0.68rem;">' + l.status + '</span>' +
           '</div>' +
-          '<div style="font-weight:600; color:#0A3D62; margin-bottom:2px; word-break:break-all;">👤 ' + (l.client || 'Unknown') + '</div>' +
-          '<div style="color:#0284C7; font-size:0.7rem; margin-bottom:3px;">🔑 ' + (l.authMethod || 'Bearer') + '</div>' +
+          '<div style="font-weight:600; color:#0A3D62; margin-bottom:2px; word-break:break-all;">Client: ' + (l.client || 'Unknown') + '</div>' +
+          '<div style="color:#0284C7; font-size:0.7rem; margin-bottom:3px;">Auth: ' + (l.authMethod || 'Bearer') + '</div>' +
           '<div style="font-family:monospace; color:#334155; font-size:0.7rem; background:#F8FAFC; padding:2px 4px; border-radius:3px; word-break:break-all;">' +
             '<span style="color:#0284C7; font-weight:700;">' + l.method + '</span> ' + l.path +
           '</div>' +
@@ -2321,12 +2388,12 @@ IntegrationCell.Include = true</code></pre>
       const orig = btn.innerText;
       if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(text).then(() => {
-          btn.innerText = "✓ Kopiert!";
+          btn.innerText = "Kopiert";
           setTimeout(() => { btn.innerText = orig; }, 2000);
         });
       } else {
         fallbackCopy(text, () => {
-          btn.innerText = "✓ Kopiert!";
+          btn.innerText = "Kopiert";
           setTimeout(() => { btn.innerText = orig; }, 2000);
         });
       }
