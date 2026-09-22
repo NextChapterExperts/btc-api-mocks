@@ -1969,6 +1969,14 @@ IntegrationCell.Include = true</code></pre>
               explanation.innerHTML = '💡 <b>Weg 2 Erfolg (Hybrid APIM + CPI):</b> Token über Shared iFlow aus BTP Keystore bezogen und autorisiert weitergereicht!';
             }
           }
+          addClientAuditLog({
+            status: 200,
+            client: type === 'devhub' ? 'sb-dh-3b72cd96 (Developer Hub)' : (type === 'apim_classic' ? 'sb-apim-classic-kvm' : 'sb-hybrid-cpi-flow'),
+            authMethod: type === 'devhub' ? 'Weg 3: Integration Cell Edge' : (type === 'apim_classic' ? 'Weg 1: Klassisch APIM KVM' : 'Weg 2: Hybrid APIM+CPI'),
+            tokenPreview: (btpTokens[type] || 'ey_bearer...').substring(0, 20) + '...',
+            path: type === 'devhub' ? '/demo' : '/api/v1/smartmeters',
+            method: 'GET'
+          });
         } else if (data.status === 403) {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
@@ -1977,6 +1985,14 @@ IntegrationCell.Include = true</code></pre>
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data, null, 2);
           if (explanation) explanation.innerHTML = '💡 <b>Didaktischer Aha-Effekt:</b> Ohne Developer Hub Produkt-Subskription verweigert die Integration Cell den Service Key mit 403!';
+          addClientAuditLog({
+            status: 403,
+            client: 'sb-f581317a (Service Key ohne Subskription)',
+            authMethod: 'Integration Cell (Forbidden)',
+            tokenPreview: (btpTokens[type] || 'ey_servicekey...').substring(0, 20) + '...',
+            path: '/demo',
+            method: 'GET'
+          });
         } else {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
@@ -2099,6 +2115,14 @@ IntegrationCell.Include = true</code></pre>
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
           if (codeEl) codeEl.innerText = displayData;
           if (explanation) explanation.innerHTML = config.explanation;
+          addClientAuditLog({
+            status: res.status,
+            client: 'Mock Direct Client (Browser)',
+            authMethod: 'Bearer (Direct Mock Auth)',
+            tokenPreview: currentLiveToken ? (currentLiveToken.substring(0, 20) + '...') : 'kein Token',
+            path: config.url,
+            method: config.method
+          });
         } else {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
@@ -2107,6 +2131,14 @@ IntegrationCell.Include = true</code></pre>
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
           if (codeEl) codeEl.innerText = displayData;
           if (explanation) explanation.innerHTML = '⚠️ Das Mock-Backend meldete einen Fehler: Bitte überprüfe das Bearer-Token.';
+          addClientAuditLog({
+            status: res.status,
+            client: 'Mock Direct Client (Browser)',
+            authMethod: 'Direct Error',
+            tokenPreview: currentLiveToken ? (currentLiveToken.substring(0, 20) + '...') : 'kein Token',
+            path: config.url,
+            method: config.method
+          });
         }
         setTimeout(refreshAuditLogs, 300);
       } catch (err) {
@@ -2212,44 +2244,71 @@ IntegrationCell.Include = true</code></pre>
       copyToClipboard('Authorization: Bearer ' + token, btn);
     }
 
+    // Lokaler Client-Store für sofortiges Wire-Tap Feedback (ergänzt Serverless /api/audit)
+    function addClientAuditLog(entry) {
+      try {
+        const stored = JSON.parse(localStorage.getItem('btc_wiretap_logs') || '[]');
+        stored.unshift({
+          id: 'client_' + Date.now().toString(36),
+          timestamp: new Date().toISOString(),
+          ...entry
+        });
+        localStorage.setItem('btc_wiretap_logs', JSON.stringify(stored.slice(0, 20)));
+      } catch (e) {}
+      renderWireTap();
+    }
+
     async function refreshAuditLogs() {
+      try {
+        const res = await fetch('/api/audit');
+        const data = await res.json();
+        const serverLogs = data.logs || [];
+        if (serverLogs.length > 0) {
+          const stored = JSON.parse(localStorage.getItem('btc_wiretap_logs') || '[]');
+          const merged = [...stored];
+          serverLogs.forEach(sl => {
+            if (!merged.find(m => m.id === sl.id || m.timestamp === sl.timestamp)) {
+              merged.push(sl);
+            }
+          });
+          merged.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+          localStorage.setItem('btc_wiretap_logs', JSON.stringify(merged.slice(0, 30)));
+        }
+      } catch (e) {}
+      renderWireTap();
+    }
+
+    function renderWireTap() {
       const feed = document.getElementById('auditLogFeed');
       const totalText = document.getElementById('auditTotalText');
       if (!feed) return;
 
-      try {
-        const res = await fetch('/api/audit');
-        const data = await res.json();
-        const logs = data.logs || [];
+      const logs = JSON.parse(localStorage.getItem('btc_wiretap_logs') || '[]');
+      if (totalText) totalText.innerText = logs.length + ' Events';
 
-        if (totalText) totalText.innerText = logs.length + ' Events';
-
-        if (logs.length === 0) {
-          feed.innerHTML = '<div style="text-align:center; padding:20px 10px; color:#64748B; font-size:0.76rem;">⏳ Noch keine Events erfasst.</div>';
-          return;
-        }
-
-        feed.innerHTML = logs.map(l => {
-          const isSuccess = l.status >= 200 && l.status < 300;
-          const statusBg = isSuccess ? '#DCFCE7' : '#FEE2E2';
-          const statusColor = isSuccess ? '#166534' : '#991B1B';
-          const timeStr = new Date(l.timestamp).toLocaleTimeString();
-
-          return '<div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; font-size:0.75rem; box-shadow:0 1px 2px rgba(0,0,0,0.02);">' +
-            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
-              '<span style="font-weight:700; font-family:monospace; color:#475569;">' + timeStr + '</span>' +
-              '<span style="background:' + statusBg + '; color:' + statusColor + '; padding:1px 5px; border-radius:4px; font-weight:700; font-size:0.68rem;">' + l.status + '</span>' +
-            '</div>' +
-            '<div style="font-weight:600; color:#0A3D62; margin-bottom:2px; word-break:break-all;">👤 ' + (l.client || 'Unknown') + '</div>' +
-            '<div style="color:#0284C7; font-size:0.7rem; margin-bottom:3px;">🔑 ' + (l.authMethod || 'Bearer') + '</div>' +
-            '<div style="font-family:monospace; color:#334155; font-size:0.7rem; background:#F8FAFC; padding:2px 4px; border-radius:3px; word-break:break-all;">' +
-              '<span style="color:#0284C7; font-weight:700;">' + l.method + '</span> ' + l.path +
-            '</div>' +
-          '</div>';
-        }).join('');
-      } catch (err) {
-        console.error('Audit-Fehler:', err);
+      if (logs.length === 0) {
+        feed.innerHTML = '<div style="text-align:center; padding:20px 10px; color:#64748B; font-size:0.76rem;">⏳ Noch keine Events erfasst. Klicke links auf einen Testbutton!</div>';
+        return;
       }
+
+      feed.innerHTML = logs.map(l => {
+        const isSuccess = l.status >= 200 && l.status < 300;
+        const statusBg = isSuccess ? '#DCFCE7' : '#FEE2E2';
+        const statusColor = isSuccess ? '#166534' : '#991B1B';
+        const timeStr = new Date(l.timestamp).toLocaleTimeString();
+
+        return '<div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; font-size:0.75rem; box-shadow:0 1px 2px rgba(0,0,0,0.02);">' +
+          '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+            '<span style="font-weight:700; font-family:monospace; color:#475569;">' + timeStr + '</span>' +
+            '<span style="background:' + statusBg + '; color:' + statusColor + '; padding:1px 5px; border-radius:4px; font-weight:700; font-size:0.68rem;">' + l.status + '</span>' +
+          '</div>' +
+          '<div style="font-weight:600; color:#0A3D62; margin-bottom:2px; word-break:break-all;">👤 ' + (l.client || 'Unknown') + '</div>' +
+          '<div style="color:#0284C7; font-size:0.7rem; margin-bottom:3px;">🔑 ' + (l.authMethod || 'Bearer') + '</div>' +
+          '<div style="font-family:monospace; color:#334155; font-size:0.7rem; background:#F8FAFC; padding:2px 4px; border-radius:3px; word-break:break-all;">' +
+            '<span style="color:#0284C7; font-weight:700;">' + l.method + '</span> ' + l.path +
+          '</div>' +
+        '</div>';
+      }).join('');
     }
 
     function copyBtpToken(type, btn) {
