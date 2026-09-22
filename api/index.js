@@ -1565,7 +1565,8 @@ IntegrationCell.Include = true</code></pre>
             <b>Weg 1 (Klassisch APIM)</b> und <b>Weg 2 (Hybrid APIM + CPI)</b> sind als Architektur-Referenzmuster hinterlegt; deren Live-Test-Schaltflächen werden erst aktiviert, sobald die Artefakte auf dem BTP-Tenant bereitgestellt sind.
           </div>
 
-          <div class="arch-3col-grid">
+          <!-- ZEILE 1: OPTION 1 & OPTION 2 (KONZEPTE / NOCH NICHT DEPLOYED) -->
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px; margin-bottom:18px;">
             
             <!-- WEG 1: KLASSISCH APIM NATIV -->
             <div class="arch-card" style="opacity:0.95;">
@@ -1643,71 +1644,163 @@ IntegrationCell.Include = true</code></pre>
               </div>
             </div>
 
-            <!-- WEG 3: INTEGRATION CELL (NORTH STAR) -->
-            <div class="arch-card highlight">
-              <div>
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
-                  <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#D1FAE5; padding:2px 6px; border-radius:4px;">
-                    NORTH STAR · ZERO CODE
-                  </span>
-                  <span id="btpDevTokenBadge" class="token-status-badge" style="background:#DCFCE7; color:#166534; border:1px solid #86EFAC;">Aktiv auf BTP</span>
-                </div>
-                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0A58CA;">Weg 3: Integration Cell (Live implementiert)</h3>
-                <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
-                  Modernes API-Artefakt auf K8s Edge Gateway. Destination delegiert OAuth vollautomatisch. Developer Hub Key Inbound.
-                </p>
+          </div>
 
-                <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:6px; padding:6px 8px; font-size:0.72rem; font-family:monospace; margin-bottom:10px; color:#166534;">
-                  <div><b>Tresor:</b> BTP Destination Service</div>
-                  <div><b>Gateway:</b> Istio Envoy Pod (/demo)</div>
-                  <div><b>Aufwand:</b> 3–5 Std. (Zero Code!)</div>
-                  <div><b>Status:</b> Live auf BTP deployed (872f920dtrial)</div>
-                </div>
+          <!-- ZEILE 2: WEG 3 - INTEGRATION CELL (PRODUKT-BINDUNG VS. SERVICE KEY) -->
+          <div class="arch-card highlight" style="border:2px solid #0284C7; padding:18px; margin-bottom:16px;">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                <span style="font-size:0.72rem; font-weight:700; color:#0369A1; background:#E0F2FE; padding:3px 8px; border-radius:4px;">
+                  OPTION 3 · INTEGRATION CELL (API-ARTEFAKT)
+                </span>
+                <span class="token-status-badge" style="background:#DCFCE7; color:#166534; border:1px solid #86EFAC;">
+                  Live auf BTP deployed (872f920dtrial)
+                </span>
+              </div>
+              <h3 style="margin:0 0 6px 0; font-size:1.15rem; color:#0A58CA;">
+                Weg 3: Integration Cell (Hybrid Edge Gateway)
+              </h3>
+              <p style="font-size:0.8rem; color:#475569; margin:0 0 12px 0; line-height:1.45;">
+                Modernes API-Artefakt auf K8s Edge Gateway. Outbound-OAuth zum Mock-Backend wird vollautomatisch über die BTP Destination delegiert.
+              </p>
 
-                <!-- Ziel-Endpoint -->
-                <div style="margin-bottom:8px;">
-                  <div style="font-size:0.72rem; font-weight:600; color:#166534; margin-bottom:2px;">Integration Cell Live Endpoint:</div>
-                  <div class="url-display-bar">
-                    <a href="${BTP_CREDENTIALS.devhub.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.devhub.endpoint}</a>
-                    <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.devhub.endpoint}', this)">Kopieren</button>
-                  </div>
-                </div>
-
-                <!-- Token Display -->
-                <div style="margin-bottom:10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                    <span style="font-size:0.72rem; font-weight:600; color:#475569;">Developer Key Bearer Token:</span>
-                    <button class="copy-btn" onclick="copyBtpToken('devhub', this)">Kopieren</button>
-                  </div>
-                  <code id="btpDevTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
+              <!-- Live-Endpoint -->
+              <div style="margin-bottom:12px;">
+                <div style="font-size:0.72rem; font-weight:600; color:#166534; margin-bottom:3px;">Integration Cell Live Endpoint:</div>
+                <div class="url-display-bar">
+                  <a href="${BTP_CREDENTIALS.devhub.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.devhub.endpoint}</a>
+                  <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.devhub.endpoint}', this)">Kopieren</button>
                 </div>
               </div>
 
-              <div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                  <button id="btnFetchDevToken" class="btn-token" style="background:#0A58CA;" onclick="fetchBtpToken('devhub')">
-                    <span>1. Token abrufen</span>
-                  </button>
-                  <button id="btnInvokeDev" class="btn-token" style="background:#0284C7;" onclick="invokeBtp('devhub')">
-                    <span>2. Testen (/demo)</span>
-                  </button>
-                  <button id="btnInvokeSvc" class="btn-token" style="background:#64748B;" onclick="invokeBtp('servicekey')" title="Testet mit generischem Service Key ohne Produkt-Subskription">
-                    <span>Service Key Test</span>
-                  </button>
+              <!-- ARCHITEKTUR-PRINZIP: PRODUKT-BINDUNG VS SERVICE KEY -->
+              <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:0.8rem; line-height:1.5; color:#14532D;">
+                <b style="font-size:0.86rem; display:block; margin-bottom:4px; color:#166534;">
+                  Zentrales Inbound-Autorisierungs-Prinzip der SAP Integration Cell:
+                </b>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:12px; margin-top:8px;">
+                  <div style="background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:10px 12px;">
+                    <b style="color:#047857;">Regel 1: Mit Produkt-Subskription (Aktives Setup)</b>
+                    <div style="font-size:0.75rem; color:#166534; margin-top:3px; line-height:1.4;">
+                      Ist das API-Artefakt im Developer Hub einem <b>Produkt</b> zugeordnet, <b>geht der Aufruf ausschließlich über den Developer Key</b> einer abonnierten Application (Track 3A). Ein generischer Service Key wird von der Integration Cell mit <b>HTTP 403 Forbidden</b> abgewiesen!
+                    </div>
+                  </div>
+                  <div style="background:#FFFFFF; border:1px solid #BBF7D0; border-radius:6px; padding:10px 12px;">
+                    <b style="color:#0369A1;">Regel 2: Ohne Produkt-Zuweisung (Direktzugriff)</b>
+                    <div style="font-size:0.75rem; color:#075985; margin-top:3px; line-height:1.4;">
+                      Habe ich <b>kein Produkt</b> (z. B. reine interne System-zu-System-Kopplung ohne Developer Hub Governance), <b>dann geht es auch direkt über den Service Key</b> der Process Integration Runtime (<code>it-rt</code>).
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DIE 2 TEST-STRÄNGE IM VERGLEICH: DEVELOPER KEY VS SERVICE KEY -->
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:16px;">
+                
+                <!-- TRACK 3A: DEVELOPER KEY (PRODUKT AKTIV) -->
+                <div style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                      <span style="font-size:0.72rem; font-weight:700; color:#047857; background:#D1FAE5; padding:2px 6px; border-radius:4px;">
+                        TRACK 3A · DEVELOPER KEY
+                      </span>
+                      <span class="token-status-badge" style="background:#DCFCE7; color:#166534; border:1px solid #86EFAC;">
+                        Erwartet: 200 OK
+                      </span>
+                    </div>
+                    <h4 style="margin:4px 0 2px 0; font-size:0.92rem; color:#0F172A;">Mit Produkt-Subskription</h4>
+                    <p style="font-size:0.74rem; color:#64748B; margin:0 0 10px 0; line-height:1.35;">
+                      Client nutzt die Zugangsdaten der abonnierten Developer Hub Application (<code>it-rt.API.invoke</code>).
+                    </p>
+
+                    <!-- Token Display -->
+                    <div style="margin-bottom:10px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                        <span style="font-size:0.72rem; font-weight:600; color:#475569;">Developer Bearer Token:</span>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                          <span id="btpDevTokenBadge" class="token-status-badge">Kein Token</span>
+                          <button class="copy-btn" onclick="copyBtpToken('devhub', this)">Kopieren</button>
+                        </div>
+                      </div>
+                      <code id="btpDevTokenDisplay" style="display:block; font-size:0.7rem; background:#FFFFFF; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Developer Token holen'&gt;</code>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                      <button id="btnFetchDevToken" class="btn-token" style="background:#047857;" onclick="fetchBtpToken('devhub')">
+                        <span>1. Developer Token holen</span>
+                      </button>
+                      <button id="btnInvokeDev" class="btn-token" style="background:#0A58CA;" onclick="invokeBtp('devhub')">
+                        <span>2. Testen mit Developer Key (/demo)</span>
+                      </button>
+                    </div>
+
+                    <div id="btpDevResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span id="btpDevStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
+                        <span id="btpDevDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
+                      </div>
+                      <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpDevCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
+                      <div id="btpDevExplanation" style="margin-top:6px; font-size:0.72rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:4px;"></div>
+                    </div>
+                  </div>
                 </div>
 
-                <div id="btpDevResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span id="btpDevStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
-                    <span id="btpDevDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
+                <!-- TRACK 3B: SERVICE KEY (OHNE PRODUKT) -->
+                <div style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:12px; display:flex; flex-direction:column; justify-content:space-between;">
+                  <div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                      <span style="font-size:0.72rem; font-weight:700; color:#B45309; background:#FEF3C7; padding:2px 6px; border-radius:4px;">
+                        TRACK 3B · SERVICE KEY
+                      </span>
+                      <span class="token-status-badge" style="background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA;">
+                        Erwartet: 403 Forbidden
+                      </span>
+                    </div>
+                    <h4 style="margin:4px 0 2px 0; font-size:0.92rem; color:#0F172A;">Ohne Produkt-Subskription</h4>
+                    <p style="font-size:0.74rem; color:#64748B; margin:0 0 10px 0; line-height:1.35;">
+                      Generischer <code>it-rt</code> Service Key der Service-Instanz. Scheitert an der Produkt-Bindung der Integration Cell.
+                    </p>
+
+                    <!-- Token Display -->
+                    <div style="margin-bottom:10px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
+                        <span style="font-size:0.72rem; font-weight:600; color:#475569;">Service Key Bearer Token:</span>
+                        <div style="display:flex; gap:4px; align-items:center;">
+                          <span id="btpSvcTokenBadge" class="token-status-badge">Kein Token</span>
+                          <button class="copy-btn" onclick="copyBtpToken('servicekey', this)">Kopieren</button>
+                        </div>
+                      </div>
+                      <code id="btpSvcTokenDisplay" style="display:block; font-size:0.7rem; background:#FFFFFF; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Service Key Token holen'&gt;</code>
+                    </div>
                   </div>
-                  <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpDevCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
-                  <div id="btpDevExplanation" style="margin-top:6px; font-size:0.72rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:4px;"></div>
+
+                  <div>
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                      <button id="btnFetchSvcToken" class="btn-token" style="background:#B45309;" onclick="fetchBtpToken('servicekey')">
+                        <span>1. Service Key Token holen</span>
+                      </button>
+                      <button id="btnInvokeSvc" class="btn-token" style="background:#475569;" onclick="invokeBtp('servicekey')">
+                        <span>2. Testen mit Service Key (/demo)</span>
+                      </button>
+                    </div>
+
+                    <div id="btpSvcResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                        <span id="btpSvcStatusBadge" style="font-weight:700; font-size:0.76rem; color:#F87171;">HTTP 403 Forbidden</span>
+                        <span id="btpSvcDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
+                      </div>
+                      <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpSvcCode" style="color:#FECACA; font-size:0.7rem;"></code></pre>
+                      <div id="btpSvcExplanation" style="margin-top:6px; font-size:0.72rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:4px;"></div>
+                    </div>
+                  </div>
                 </div>
+
               </div>
             </div>
-
           </div>
+
         </div>
 
       </div>
@@ -1766,21 +1859,15 @@ IntegrationCell.Include = true</code></pre>
     async function fetchBtpToken(type) {
       const btnMap = {
         'devhub': 'btnFetchDevToken',
-        'servicekey': 'btnFetchSvcToken',
-        'apim_classic': 'btnFetchApimToken',
-        'apim_hybrid': 'btnFetchHybridToken'
+        'servicekey': 'btnFetchSvcToken'
       };
       const badgeMap = {
         'devhub': 'btpDevTokenBadge',
-        'servicekey': 'btpDevTokenBadge',
-        'apim_classic': 'btpApimTokenBadge',
-        'apim_hybrid': 'btpHybridTokenBadge'
+        'servicekey': 'btpSvcTokenBadge'
       };
       const displayMap = {
         'devhub': 'btpDevTokenDisplay',
-        'servicekey': 'btpDevTokenDisplay',
-        'apim_classic': 'btpApimTokenDisplay',
-        'apim_hybrid': 'btpHybridTokenDisplay'
+        'servicekey': 'btpSvcTokenDisplay'
       };
 
       const btn = document.getElementById(btnMap[type]);
@@ -1818,20 +1905,22 @@ IntegrationCell.Include = true</code></pre>
           if (btn) {
             btn.classList.remove('loading');
             btn.innerHTML = '<span>Token aktiv</span>';
-            setTimeout(() => { btn.innerHTML = '<span>Token neu</span>'; }, 2000);
+            setTimeout(() => { 
+              btn.innerHTML = type === 'devhub' ? '<span>1. Developer Token holen</span>' : '<span>1. Service Key Token holen</span>'; 
+            }, 2000);
           }
         } else {
           if (display) display.innerText = 'Fehler: ' + JSON.stringify(data);
           if (btn) {
             btn.classList.remove('loading');
-            btn.innerHTML = '<span>Token abrufen</span>';
+            btn.innerHTML = type === 'devhub' ? '<span>1. Developer Token holen</span>' : '<span>1. Service Key Token holen</span>';
           }
         }
       } catch (err) {
         if (display) display.innerText = 'Netzwerkfehler: ' + err.message;
         if (btn) {
           btn.classList.remove('loading');
-          btn.innerHTML = '<span>Token abrufen</span>';
+          btn.innerHTML = type === 'devhub' ? '<span>1. Developer Token holen</span>' : '<span>1. Service Key Token holen</span>';
         }
       }
     }
@@ -1839,33 +1928,23 @@ IntegrationCell.Include = true</code></pre>
     async function invokeBtp(type) {
       const boxMap = {
         'devhub': 'btpDevResultBox',
-        'servicekey': 'btpDevResultBox',
-        'apim_classic': 'btpApimResultBox',
-        'apim_hybrid': 'btpHybridResultBox'
+        'servicekey': 'btpSvcResultBox'
       };
       const badgeMap = {
         'devhub': 'btpDevStatusBadge',
-        'servicekey': 'btpDevStatusBadge',
-        'apim_classic': 'btpApimStatusBadge',
-        'apim_hybrid': 'btpHybridStatusBadge'
+        'servicekey': 'btpSvcStatusBadge'
       };
       const durMap = {
         'devhub': 'btpDevDuration',
-        'servicekey': 'btpDevDuration',
-        'apim_classic': 'btpApimDuration',
-        'apim_hybrid': 'btpHybridDuration'
+        'servicekey': 'btpSvcDuration'
       };
       const codeMap = {
         'devhub': 'btpDevCode',
-        'servicekey': 'btpDevCode',
-        'apim_classic': 'btpApimCode',
-        'apim_hybrid': 'btpHybridCode'
+        'servicekey': 'btpSvcCode'
       };
       const expMap = {
         'devhub': 'btpDevExplanation',
-        'servicekey': 'btpDevExplanation',
-        'apim_classic': 'btpApimExplanation',
-        'apim_hybrid': 'btpHybridExplanation'
+        'servicekey': 'btpSvcExplanation'
       };
 
       const resultBox = document.getElementById(boxMap[type]);
@@ -1891,34 +1970,36 @@ IntegrationCell.Include = true</code></pre>
         if (data.status === 200) {
           if (statusBadge) {
             statusBadge.style.color = '#4ADE80';
-            statusBadge.innerText = 'HTTP ' + data.status + ' OK · ' + (data.server || 'btp-runtime');
+            statusBadge.innerText = 'HTTP ' + data.status + ' OK · ' + (data.server || 'istio-envoy');
           }
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data, null, 2);
           if (explanation) {
-            explanation.innerHTML = '<b>Weg 3 Erfolg (Integration Cell):</b> Token autorisiert, Developer Key gebunden! Der Aufruf schlägt im rechten Wire-Tap auf.';
+            explanation.innerHTML = '<b>Erfolg mit Produkt-Subskription:</b> Die Integration Cell akzeptiert den Developer Key und die BTP Destination delegiert den autorisierten Call an das Mock-Backend.';
           }
           addClientAuditLog({
             status: 200,
             client: 'sb-dh-3b72cd96 (Developer Hub)',
-            authMethod: 'Weg 3: Integration Cell Edge',
-            tokenPreview: (btpTokens[type] || 'ey_bearer...').substring(0, 20) + '...',
+            authMethod: 'Weg 3A: Developer Key (Produkt-gebunden)',
+            tokenPreview: (btpTokens['devhub'] || 'ey_bearer...').substring(0, 20) + '...',
             path: '/demo',
             method: 'GET'
           });
         } else if (data.status === 403) {
           if (statusBadge) {
             statusBadge.style.color = '#F87171';
-            statusBadge.innerText = 'HTTP ' + data.status + ' Forbidden';
+            statusBadge.innerText = 'HTTP ' + data.status + ' Forbidden · ' + (data.server || 'istio-envoy');
           }
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data, null, 2);
-          if (explanation) explanation.innerHTML = '<b>Didaktischer Aha-Effekt:</b> Ohne Developer Hub Produkt-Subskription verweigert die Integration Cell den Service Key mit 403!';
+          if (explanation) {
+            explanation.innerHTML = '<b>Architektur-Beweis:</b> Die Integration Cell verweigert den Service Key mit <b>HTTP 403 Forbidden</b>, weil das API-Artefakt einem Produkt im Developer Hub zugewiesen ist! Hätten wir KEIN Produkt zugewiesen, würde der Service Key direkt funktionieren.';
+          }
           addClientAuditLog({
             status: 403,
-            client: 'sb-f581317a (Service Key ohne Subskription)',
-            authMethod: 'Integration Cell (Forbidden)',
-            tokenPreview: (btpTokens[type] || 'ey_servicekey...').substring(0, 20) + '...',
+            client: 'sb-f581317a (Service Key ohne Produkt-Subskription)',
+            authMethod: 'Weg 3B: Service Key (Forbidden wg. Produkt-Bindung)',
+            tokenPreview: (btpTokens['servicekey'] || 'ey_servicekey...').substring(0, 20) + '...',
             path: '/demo',
             method: 'GET'
           });
@@ -1927,6 +2008,7 @@ IntegrationCell.Include = true</code></pre>
             statusBadge.style.color = '#F87171';
             statusBadge.innerText = 'HTTP ' + (data.status || '500');
           }
+          if (durationSpan) durationSpan.innerText = 'Dauer: ' + (data.durationMs || 0) + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data || data, null, 2);
         }
 
