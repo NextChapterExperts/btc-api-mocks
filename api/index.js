@@ -141,7 +141,7 @@ const BTP_CREDENTIALS = {
     clientId: process.env.BTP_APIM_CLIENT_ID || 'sb-apim-classic-kvm!b711904|apim-rt!b12001',
     clientSecret: process.env.BTP_APIM_CLIENT_SECRET || 'mock-apim-kvm-secret-998822==',
     apiKey: process.env.BTP_APIM_APIKEY || '3EFIwCvnQ1RaiY0rDknZO4WDveECyVgp',
-    endpoint: process.env.BTP_APIM_ENDPOINT || 'https://872f920dtrial-d58ffe5a9522426e865d4e1cc662a85c.a.integration.cloud.sap/meter-service'
+    endpoint: process.env.BTP_APIM_ENDPOINT || 'https://872f920dtrial-trial.integrationsuitetrial-apim.us10.hana.ondemand.com:443/872f920dtrial/meter-service'
   },
   apim_hybrid: {
     id: 'apim_hybrid',
@@ -261,36 +261,75 @@ app.all('/api/btp/invoke', async (req, res) => {
     });
   }
 
-  // WEG 1B: Ungültiger API Key / Unbefugter Direktzugriff
+  // WEG 1B: Ungültiger API Key / Unbefugter Direktzugriff (Live gegen APIM Gateway)
   if (keyType === 'apim_classic_invalid') {
-    recordAuditLog({
-      status: 401,
-      client: 'invalid-client-key-401 (Unberechtigt)',
-      authMethod: 'Weg 1B: VerifyAPIKey (Rejected at Gateway)',
-      tokenPreview: 'None (Abgewiesen)',
-      path: '/meter-service',
-      method: 'GET',
-      userAgent: 'SAP APIM Gateway Proxy',
-      source: 'APIM Security Policy'
-    });
+    const creds = BTP_CREDENTIALS.apim_classic;
+    const endpointUrl = req.body?.endpointUrl || req.query?.endpointUrl || creds.endpoint;
+    const invalidKey = 'invalid-client-key-401';
+    const startTime = Date.now();
 
-    return res.json({
-      keyType: 'apim_classic_invalid',
-      status: 401,
-      statusText: 'Unauthorized',
-      durationMs: 4,
-      server: 'sap-apim-gateway',
-      correlationId: 'corr-fault-' + Date.now().toString(36),
-      artifactType: 'APIM-Fault-Rule',
-      data: {
-        fault: {
-          faultstring: 'Failed to resolve API Key: invalid-client-key-401',
-          detail: {
-            errorcode: 'steps.verifyapikey.FailedToResolveAPIKey'
+    try {
+      const apimResp = await fetch(endpointUrl, {
+        method: 'GET',
+        headers: {
+          'apikey': invalidKey,
+          'Accept': 'application/json'
+        }
+      });
+      const durationMs = Date.now() - startTime;
+      const data = await apimResp.json().catch(() => ({}));
+
+      recordAuditLog({
+        status: apimResp.status,
+        client: invalidKey + ' (Unberechtigt)',
+        authMethod: 'Weg 1B: VerifyAPIKey (Rejected at Gateway)',
+        tokenPreview: 'None (Abgewiesen)',
+        path: '/meter-service',
+        method: 'GET',
+        userAgent: 'SAP APIM Gateway Proxy',
+        source: 'APIM Security Policy'
+      });
+
+      return res.json({
+        keyType: 'apim_classic_invalid',
+        status: apimResp.status,
+        statusText: apimResp.statusText,
+        durationMs,
+        server: apimResp.headers.get('server') || 'sap-apim-gateway',
+        correlationId: apimResp.headers.get('x-correlationid') || apimResp.headers.get('x-request-id') || 'corr-fault-' + Date.now().toString(36),
+        artifactType: 'APIM-Fault-Rule',
+        data
+      });
+    } catch (err) {
+      recordAuditLog({
+        status: 401,
+        client: 'invalid-client-key-401 (Unberechtigt)',
+        authMethod: 'Weg 1B: VerifyAPIKey (Rejected at Gateway)',
+        tokenPreview: 'None (Abgewiesen)',
+        path: '/meter-service',
+        method: 'GET',
+        userAgent: 'SAP APIM Gateway Proxy',
+        source: 'APIM Security Policy'
+      });
+
+      return res.json({
+        keyType: 'apim_classic_invalid',
+        status: 401,
+        statusText: 'Unauthorized',
+        durationMs: 4,
+        server: 'sap-apim-gateway',
+        correlationId: 'corr-fault-' + Date.now().toString(36),
+        artifactType: 'APIM-Fault-Rule',
+        data: {
+          fault: {
+            faultstring: 'Invalid ApiKey',
+            detail: {
+              errorcode: 'oauth.v2.InvalidApiKey'
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   // WEG 1A: Klassisch APIM Nativ mit gültigem Developer API Key
