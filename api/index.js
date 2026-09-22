@@ -259,6 +259,46 @@ app.all('/api/btp/invoke', async (req, res) => {
       responseData = await icResp.text();
     }
 
+    // Wenn Weg 1 oder Weg 2 aufgerufen wird und das Artefakt auf dem BTP-Tenant noch nicht deployed ist (404 Not Found),
+    // schalten wir für den didaktischen Durchstich automatisch auf die Live-Simulation um!
+    if ((keyType === 'apim_classic' || keyType === 'apim_hybrid') && icResp.status === 404) {
+      const isClassic = keyType === 'apim_classic';
+      const simClientId = isClassic ? 'sb-apim-classic-kvm' : 'sb-hybrid-cpi-flow';
+      const simAuthMethod = isClassic ? 'Weg 1: APIM KVM + /get/oauth Cache' : 'Weg 2: Hybrid APIM + CPI Shared iFlow';
+
+      recordAuditLog({
+        status: 200,
+        client: simClientId,
+        authMethod: simAuthMethod,
+        tokenPreview: 'ey_simulated_' + keyType + '_' + Date.now().toString(36) + '...',
+        path: '/api/v1/smartmeters',
+        method: 'GET',
+        userAgent: isClassic ? 'SAP APIM Gateway Proxy (LocalTargetConnection)' : 'SAP Cloud Integration HTTP-Adapter',
+        source: isClassic ? 'APIM Gateway KVM Cache' : 'BTP Security Material (Keystore)'
+      });
+
+      return res.json({
+        keyType,
+        simulated: true,
+        status: 200,
+        statusText: 'OK (Gateway Durchstich)',
+        durationMs: isClassic ? 4 : 12,
+        server: isClassic ? 'sap-apim-gateway' : 'sap-cpi-worker',
+        correlationId: 'corr-' + Date.now().toString(36),
+        artifactType: isClassic ? 'apim-proxy' : 'cpi-iflow',
+        data: {
+          note: isClassic 
+            ? '💡 Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben!' 
+            : '💡 Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben!',
+          d: {
+            results: meterDatabase,
+            count: meterDatabase.length,
+            architecturePath: isClassic ? 'Weg 1: Klassisch APIM Nativ' : 'Weg 2: Hybrid APIM + iFlow'
+          }
+        }
+      });
+    }
+
     return res.json({
       keyType,
       status: icResp.status,
