@@ -160,6 +160,15 @@ app.all('/api/btp/token', async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const keyType = req.body?.keyType || req.query?.keyType || 'devhub';
+
+  if (keyType === 'apim_classic' || keyType === 'apim_hybrid') {
+    return res.status(501).json({
+      error: 'Not Implemented',
+      keyType,
+      message: 'Weg 1 (Klassisch APIM) und Weg 2 (Hybrid APIM + CPI) sind auf dem BTP-Tenant noch nicht implementiert / deployed. Nur Weg 3 (Integration Cell) ist aktiv.'
+    });
+  }
+
   const creds = BTP_CREDENTIALS[keyType] || BTP_CREDENTIALS.devhub;
 
   const tokenUrl = req.body?.tokenUrl || req.query?.tokenUrl || creds.tokenUrl;
@@ -179,20 +188,6 @@ app.all('/api/btp/token', async (req, res) => {
 
     const data = await response.json();
     if (!response.ok) {
-      // Falls noch kein eigener XSUAA-Mandant für Weg 1 oder Weg 2 verknüpft ist, erzeuge ein valides Test-Token
-      if (keyType === 'apim_classic' || keyType === 'apim_hybrid') {
-        const dummyToken = generateToken('ey_' + keyType);
-        return res.json({
-          keyType,
-          access_token: dummyToken,
-          token_type: 'bearer',
-          expires_in: 3600,
-          scope: keyType === 'apim_classic' ? 'apim.read meter.read' : 'cpi.read meter.read',
-          jti: 'jti_' + Math.random().toString(36).substring(2),
-          expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
-          simulated: true
-        });
-      }
       return res.status(response.status).json({ error: 'BTP XSUAA Error', details: data });
     }
 
@@ -206,19 +201,6 @@ app.all('/api/btp/token', async (req, res) => {
       expires_at: new Date(Date.now() + (data.expires_in || 3599) * 1000).toISOString()
     });
   } catch (err) {
-    if (keyType === 'apim_classic' || keyType === 'apim_hybrid') {
-      const dummyToken = generateToken('ey_' + keyType);
-      return res.json({
-        keyType,
-        access_token: dummyToken,
-        token_type: 'bearer',
-        expires_in: 3600,
-        scope: keyType === 'apim_classic' ? 'apim.read meter.read' : 'cpi.read meter.read',
-        jti: 'jti_' + Math.random().toString(36).substring(2),
-        expires_at: new Date(Date.now() + 3600 * 1000).toISOString(),
-        simulated: true
-      });
-    }
     return res.status(500).json({ error: 'Failed to connect to BTP XSUAA', message: err.message });
   }
 });
@@ -243,6 +225,15 @@ app.all('/api/btp/invoke', async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const keyType = req.body?.keyType || req.query?.keyType || 'devhub';
+
+  if (keyType === 'apim_classic' || keyType === 'apim_hybrid') {
+    return res.status(501).json({
+      error: 'Not Implemented',
+      keyType,
+      message: 'Dieser Architekturpfad ist auf dem BTP-Tenant noch nicht implementiert / deployed. Nur Weg 3 (Integration Cell /demo) ist live.'
+    });
+  }
+
   const creds = BTP_CREDENTIALS[keyType] || BTP_CREDENTIALS.devhub;
   const endpointUrl = req.body?.endpointUrl || req.query?.endpointUrl || creds.endpoint;
   let token = req.body?.token || req.query?.token;
@@ -279,46 +270,6 @@ app.all('/api/btp/invoke', async (req, res) => {
       responseData = await icResp.text();
     }
 
-    // Wenn Weg 1 oder Weg 2 aufgerufen wird und das Artefakt auf dem BTP-Tenant noch nicht deployed ist (404 Not Found),
-    // schalten wir für den didaktischen Durchstich automatisch auf die Live-Simulation um!
-    if ((keyType === 'apim_classic' || keyType === 'apim_hybrid') && icResp.status === 404) {
-      const isClassic = keyType === 'apim_classic';
-      const simClientId = isClassic ? 'sb-apim-classic-kvm' : 'sb-hybrid-cpi-flow';
-      const simAuthMethod = isClassic ? 'Weg 1: APIM KVM + /get/oauth Cache' : 'Weg 2: Hybrid APIM + CPI Shared iFlow';
-
-      recordAuditLog({
-        status: 200,
-        client: simClientId,
-        authMethod: simAuthMethod,
-        tokenPreview: 'ey_simulated_' + keyType + '_' + Date.now().toString(36) + '...',
-        path: '/api/v1/smartmeters',
-        method: 'GET',
-        userAgent: isClassic ? 'SAP APIM Gateway Proxy (LocalTargetConnection)' : 'SAP Cloud Integration HTTP-Adapter',
-        source: isClassic ? 'APIM Gateway KVM Cache' : 'BTP Security Material (Keystore)'
-      });
-
-      return res.json({
-        keyType,
-        simulated: true,
-        status: 200,
-        statusText: 'OK (Gateway Durchstich)',
-        durationMs: isClassic ? 4 : 12,
-        server: isClassic ? 'sap-apim-gateway' : 'sap-cpi-worker',
-        correlationId: 'corr-' + Date.now().toString(36),
-        artifactType: isClassic ? 'apim-proxy' : 'cpi-iflow',
-        data: {
-          note: isClassic 
-            ? 'Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben.' 
-            : 'Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben.',
-          d: {
-            results: meterDatabase,
-            count: meterDatabase.length,
-            architecturePath: isClassic ? 'Weg 1: Klassisch APIM Nativ' : 'Weg 2: Hybrid APIM + iFlow'
-          }
-        }
-      });
-    }
-
     return res.json({
       keyType,
       status: icResp.status,
@@ -330,46 +281,6 @@ app.all('/api/btp/invoke', async (req, res) => {
       data: responseData
     });
   } catch (err) {
-    // Falls ein Pfad aufgerufen wird (z. B. Weg 1 APIM oder Weg 2 Hybrid), der noch nicht physisch im Kunden-BTP-Tenant provisioniert ist:
-    // Schalte auf didaktische Live-Simulation um, rufe das Mock-Backend direkt ab und erfasse das Event im Audit-Log!
-    if (keyType === 'apim_classic' || keyType === 'apim_hybrid') {
-      const isClassic = keyType === 'apim_classic';
-      const simClientId = isClassic ? 'sb-apim-classic-kvm' : 'sb-hybrid-cpi-flow';
-      const simAuthMethod = isClassic ? 'Weg 1: APIM KVM + /get/oauth Cache' : 'Weg 2: Hybrid APIM + CPI Shared iFlow';
-      
-      recordAuditLog({
-        status: 200,
-        client: simClientId,
-        authMethod: simAuthMethod,
-        tokenPreview: 'ey_simulated_' + keyType + '_' + Date.now().toString(36) + '...',
-        path: '/api/v1/smartmeters',
-        method: 'GET',
-        userAgent: isClassic ? 'SAP APIM Gateway Proxy (LocalTargetConnection)' : 'SAP Cloud Integration HTTP-Adapter',
-        source: isClassic ? 'APIM Gateway KVM Cache' : 'BTP Security Material (Keystore)'
-      });
-
-      return res.json({
-        keyType,
-        simulated: true,
-        status: 200,
-        statusText: 'OK (Simulated Gateway Durchstich)',
-        durationMs: isClassic ? 4 : 12,
-        server: isClassic ? 'sap-apim-gateway' : 'sap-cpi-worker',
-        correlationId: 'corr-' + Date.now().toString(36),
-        artifactType: isClassic ? 'apim-proxy' : 'cpi-iflow',
-        data: {
-          note: isClassic 
-            ? 'Weg 1 (Klassisch APIM): Token über Hilfsproxy /get/oauth & KVM bezogen, im RAM gecacht und mit Bearer-Header autorisiert an Mock übergeben.' 
-            : 'Weg 2 (Hybrid APIM + CPI): Token über Shared iFlow aus BTP Security Material bezogen, im APIM-RAM gecacht und autorisiert an Mock übergeben.',
-          d: {
-            results: meterDatabase,
-            count: meterDatabase.length,
-            architecturePath: isClassic ? 'Weg 1: Klassisch APIM Nativ' : 'Weg 2: Hybrid APIM + iFlow'
-          }
-        }
-      });
-    }
-
     return res.status(500).json({ error: 'Failed to invoke Integration Suite', message: err.message });
   }
 });
@@ -1650,128 +1561,84 @@ IntegrationCell.Include = true</code></pre>
         <div id="studio-view-btp" style="display:none;">
           <div class="note note-purple" style="margin-bottom:18px;">
             <b style="font-size:0.95rem;">Die 3 SAP BTP Architekturpfade für Outbound-OAuth Backend-Schutz</b><br/>
-            Wähle einen Pfad, beziehe das Gateway- bzw. Runtime-Token und löse den autorisierten Backend-Durchstich aus. 
-            Im rechten Wire-Tap siehst du synchron in Echtzeit, mit welcher Identität der Request ankommt.
+            <b>Weg 3 (Integration Cell)</b> ist auf dem BTP-Tenant physisch implementiert und kann hier live getestet werden. 
+            <b>Weg 1 (Klassisch APIM)</b> und <b>Weg 2 (Hybrid APIM + CPI)</b> sind als Architektur-Referenzmuster hinterlegt; deren Live-Test-Schaltflächen werden erst aktiviert, sobald die Artefakte auf dem BTP-Tenant bereitgestellt sind.
           </div>
 
           <div class="arch-3col-grid">
             
             <!-- WEG 1: KLASSISCH APIM NATIV -->
-            <div class="arch-card">
+            <div class="arch-card" style="opacity:0.95;">
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                   <span style="font-size:0.68rem; font-weight:700; color:#475569; background:#F1F5F9; padding:2px 6px; border-radius:4px;">
                     OPTION 1 · GATEWAY-NATIV
                   </span>
-                  <span id="btpApimTokenBadge" class="token-status-badge">Kein Token</span>
+                  <span class="token-status-badge" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;">Nicht auf BTP implementiert</span>
                 </div>
                 <h3 style="margin:0 0 6px 0; font-size:1rem; color:#1E293B;">Weg 1: Klassisch APIM Nativ</h3>
                 <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
                   Reine APIM-Laufzeit. Token-Caching im RAM via KVM &amp; Hilfsproxy (<code>/get/oauth</code>). Keine CPI-Abhängigkeit.
                 </p>
 
-                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 8px; font-size:0.72rem; font-family:monospace; margin-bottom:10px; color:#334155;">
+                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; font-size:0.74rem; font-family:monospace; margin-bottom:12px; color:#334155; line-height:1.5;">
                   <div><b>Tresor:</b> APIM Encrypted KVM</div>
                   <div><b>Broker:</b> Hilfsproxy /get/oauth</div>
                   <div><b>Aufwand:</b> 12–16 Std. (XML-Policies)</div>
+                  <div><b>Status:</b> Konzept / In Vorbereitung</div>
                 </div>
 
-                <!-- Ziel-Endpoint -->
-                <div style="margin-bottom:8px;">
-                  <div style="font-size:0.72rem; font-weight:600; color:#475569; margin-bottom:2px;">BTP Gateway Ziel:</div>
-                  <div class="url-display-bar">
-                    <a href="${BTP_CREDENTIALS.apim_classic.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.apim_classic.endpoint}</a>
-                    <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.apim_classic.endpoint}', this)">Kopieren</button>
-                  </div>
-                </div>
-
-                <!-- Token Display -->
-                <div style="margin-bottom:10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                    <span style="font-size:0.72rem; font-weight:600; color:#475569;">Bearer Token:</span>
-                    <button class="copy-btn" onclick="copyBtpToken('apim_classic', this)">Kopieren</button>
-                  </div>
-                  <code id="btpApimTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
+                <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:6px; padding:10px 12px; font-size:0.74rem; color:#92400E; line-height:1.45; margin-bottom:12px;">
+                  <b>Erforderliche BTP-Schritte zur Inbetriebnahme:</b>
+                  <ol style="margin:6px 0 0 0; padding-left:18px;">
+                    <li>Encrypted Key-Value Map im APIM anlegen (Client Credentials).</li>
+                    <li>Hilfsproxy <code>/get/oauth</code> mit ServiceCallout zur XSUAA einrichten.</li>
+                    <li>ResponseCache-Policy &amp; AssignMessage (Bearer Injection) im API-Proxy konfigurieren.</li>
+                  </ol>
                 </div>
               </div>
 
-              <div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                  <button id="btnFetchApimToken" class="btn-token" style="background:#475569;" onclick="fetchBtpToken('apim_classic')">
-                    <span>1. Token abrufen</span>
-                  </button>
-                  <button id="btnInvokeApim" class="btn-token" style="background:#334155;" onclick="invokeBtp('apim_classic')">
-                    <span>2. Testen</span>
-                  </button>
-                </div>
-
-                <div id="btpApimResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span id="btpApimStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
-                    <span id="btpApimDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
-                  </div>
-                  <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpApimCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
-                  <div id="btpApimExplanation" style="margin-top:6px; font-size:0.72rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:4px;"></div>
+              <div style="border-top:1px solid #E2E8F0; padding-top:10px; margin-top:auto;">
+                <div style="display:inline-block; font-size:0.72rem; color:#64748B; background:#F1F5F9; border:1px dashed #CBD5E1; padding:8px 10px; border-radius:4px; width:100%; box-sizing:border-box; text-align:center;">
+                  Live-Test gesperrt: Wird freigeschaltet, sobald das APIM-Artefakt auf BTP existiert.
                 </div>
               </div>
             </div>
 
             <!-- WEG 2: HYBRID APIM + IFLOW -->
-            <div class="arch-card">
+            <div class="arch-card" style="opacity:0.95;">
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                   <span style="font-size:0.68rem; font-weight:700; color:#0369A1; background:#E0F2FE; padding:2px 6px; border-radius:4px;">
                     OPTION 2 · HYBRID SUITE
                   </span>
-                  <span id="btpHybridTokenBadge" class="token-status-badge">Kein Token</span>
+                  <span class="token-status-badge" style="background:#FEF3C7; color:#92400E; border:1px solid #FCD34D;">Nicht auf BTP implementiert</span>
                 </div>
                 <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0369A1;">Weg 2: Hybrid APIM + iFlow</h3>
                 <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
                   Funktionstrennung: Governance im APIM, Konnektivität &amp; BTP Security Material im Shared CPI-iFlow.
                 </p>
 
-                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:6px 8px; font-size:0.72rem; font-family:monospace; margin-bottom:10px; color:#334155;">
+                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:8px 10px; font-size:0.74rem; font-family:monospace; margin-bottom:12px; color:#334155; line-height:1.5;">
                   <div><b>Tresor:</b> BTP Keystore (SecMat)</div>
                   <div><b>Broker:</b> Shared iFlow /cpi/oauth</div>
                   <div><b>Aufwand:</b> 8–12 Std. (Groovy &amp; Flow)</div>
+                  <div><b>Status:</b> Konzept / In Vorbereitung</div>
                 </div>
 
-                <!-- Ziel-Endpoint -->
-                <div style="margin-bottom:8px;">
-                  <div style="font-size:0.72rem; font-weight:600; color:#475569; margin-bottom:2px;">BTP CPI Ziel:</div>
-                  <div class="url-display-bar">
-                    <a href="${BTP_CREDENTIALS.apim_hybrid.endpoint}" target="_blank" rel="noopener noreferrer" class="url-display-link">${BTP_CREDENTIALS.apim_hybrid.endpoint}</a>
-                    <button class="copy-btn" onclick="copyToClipboard('${BTP_CREDENTIALS.apim_hybrid.endpoint}', this)">Kopieren</button>
-                  </div>
-                </div>
-
-                <!-- Token Display -->
-                <div style="margin-bottom:10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                    <span style="font-size:0.72rem; font-weight:600; color:#475569;">Bearer Token:</span>
-                    <button class="copy-btn" onclick="copyBtpToken('apim_hybrid', this)">Kopieren</button>
-                  </div>
-                  <code id="btpHybridTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
+                <div style="background:#F0F9FF; border:1px solid #BAE6FD; border-radius:6px; padding:10px 12px; font-size:0.74rem; color:#0369A1; line-height:1.45; margin-bottom:12px;">
+                  <b>Erforderliche BTP-Schritte zur Inbetriebnahme:</b>
+                  <ol style="margin:6px 0 0 0; padding-left:18px;">
+                    <li>OAuth-Credentials in Cloud Integration Security Material (Keystore) speichern.</li>
+                    <li>Shared Token Refresh iFlow mit Groovy-Script und HTTP-Receiver deployen.</li>
+                    <li>APIM Proxy Flow mit ServiceCallout an den Shared iFlow anbinden.</li>
+                  </ol>
                 </div>
               </div>
 
-              <div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                  <button id="btnFetchHybridToken" class="btn-token" style="background:#0284C7;" onclick="fetchBtpToken('apim_hybrid')">
-                    <span>1. Token abrufen</span>
-                  </button>
-                  <button id="btnInvokeHybrid" class="btn-token" style="background:#0369A1;" onclick="invokeBtp('apim_hybrid')">
-                    <span>2. Testen</span>
-                  </button>
-                </div>
-
-                <div id="btpHybridResultBox" style="display:none; margin-top:10px; background:#0F172A; border:1px solid #334155; border-radius:6px; padding:8px 10px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <span id="btpHybridStatusBadge" style="font-weight:700; font-size:0.76rem; color:#4ADE80;">HTTP 200 OK</span>
-                    <span id="btpHybridDuration" style="font-size:0.68rem; color:#94A3B8;"></span>
-                  </div>
-                  <pre style="margin:0; padding:0; max-height:110px; overflow-y:auto;"><code id="btpHybridCode" style="color:#A7F3D0; font-size:0.7rem;"></code></pre>
-                  <div id="btpHybridExplanation" style="margin-top:6px; font-size:0.72rem; color:#93C5FD; border-top:1px solid #1E293B; padding-top:4px;"></div>
+              <div style="border-top:1px solid #E2E8F0; padding-top:10px; margin-top:auto;">
+                <div style="display:inline-block; font-size:0.72rem; color:#64748B; background:#F1F5F9; border:1px dashed #CBD5E1; padding:8px 10px; border-radius:4px; width:100%; box-sizing:border-box; text-align:center;">
+                  Live-Test gesperrt: Wird freigeschaltet, sobald der CPI-iFlow auf BTP existiert.
                 </div>
               </div>
             </div>
@@ -1783,9 +1650,9 @@ IntegrationCell.Include = true</code></pre>
                   <span style="font-size:0.68rem; font-weight:700; color:#047857; background:#D1FAE5; padding:2px 6px; border-radius:4px;">
                     NORTH STAR · ZERO CODE
                   </span>
-                  <span id="btpDevTokenBadge" class="token-status-badge">Kein Token</span>
+                  <span id="btpDevTokenBadge" class="token-status-badge" style="background:#DCFCE7; color:#166534; border:1px solid #86EFAC;">Aktiv auf BTP</span>
                 </div>
-                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0A58CA;">Weg 3: Integration Cell</h3>
+                <h3 style="margin:0 0 6px 0; font-size:1rem; color:#0A58CA;">Weg 3: Integration Cell (Live implementiert)</h3>
                 <p style="font-size:0.77rem; color:#64748B; margin:0 0 10px 0; line-height:1.4;">
                   Modernes API-Artefakt auf K8s Edge Gateway. Destination delegiert OAuth vollautomatisch. Developer Hub Key Inbound.
                 </p>
@@ -1794,6 +1661,7 @@ IntegrationCell.Include = true</code></pre>
                   <div><b>Tresor:</b> BTP Destination Service</div>
                   <div><b>Gateway:</b> Istio Envoy Pod (/demo)</div>
                   <div><b>Aufwand:</b> 3–5 Std. (Zero Code!)</div>
+                  <div><b>Status:</b> Live auf BTP deployed (872f920dtrial)</div>
                 </div>
 
                 <!-- Ziel-Endpoint -->
@@ -1808,7 +1676,7 @@ IntegrationCell.Include = true</code></pre>
                 <!-- Token Display -->
                 <div style="margin-bottom:10px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:3px;">
-                    <span style="font-size:0.72rem; font-weight:600; color:#475569;">Developer Key Token:</span>
+                    <span style="font-size:0.72rem; font-weight:600; color:#475569;">Developer Key Bearer Token:</span>
                     <button class="copy-btn" onclick="copyBtpToken('devhub', this)">Kopieren</button>
                   </div>
                   <code id="btpDevTokenDisplay" style="display:block; font-size:0.7rem; background:#F1F5F9; border:1px solid #CBD5E1; border-radius:4px; padding:4px 8px; color:#1E293B; word-break:break-all; max-height:40px; overflow-y:auto;">&lt;Klicke auf 'Token abrufen'&gt;</code>
@@ -2028,20 +1896,14 @@ IntegrationCell.Include = true</code></pre>
           if (durationSpan) durationSpan.innerText = 'Dauer: ' + data.durationMs + ' ms';
           if (codeEl) codeEl.innerText = JSON.stringify(data.data, null, 2);
           if (explanation) {
-            if (type === 'devhub') {
-              explanation.innerHTML = '<b>Weg 3 Erfolg (Integration Cell):</b> Token autorisiert, Developer Key gebunden! Der Aufruf schlägt im rechten Wire-Tap auf.';
-            } else if (type === 'apim_classic') {
-              explanation.innerHTML = '<b>Weg 1 Erfolg (Klassisch APIM):</b> KVM-Credentials geladen, Token aus RAM gecacht und Backend per Bearer erreicht.';
-            } else if (type === 'apim_hybrid') {
-              explanation.innerHTML = '<b>Weg 2 Erfolg (Hybrid APIM + CPI):</b> Token über Shared iFlow aus BTP Keystore bezogen und autorisiert weitergereicht.';
-            }
+            explanation.innerHTML = '<b>Weg 3 Erfolg (Integration Cell):</b> Token autorisiert, Developer Key gebunden! Der Aufruf schlägt im rechten Wire-Tap auf.';
           }
           addClientAuditLog({
             status: 200,
-            client: type === 'devhub' ? 'sb-dh-3b72cd96 (Developer Hub)' : (type === 'apim_classic' ? 'sb-apim-classic-kvm' : 'sb-hybrid-cpi-flow'),
-            authMethod: type === 'devhub' ? 'Weg 3: Integration Cell Edge' : (type === 'apim_classic' ? 'Weg 1: Klassisch APIM KVM' : 'Weg 2: Hybrid APIM+CPI'),
+            client: 'sb-dh-3b72cd96 (Developer Hub)',
+            authMethod: 'Weg 3: Integration Cell Edge',
             tokenPreview: (btpTokens[type] || 'ey_bearer...').substring(0, 20) + '...',
-            path: type === 'devhub' ? '/demo' : '/api/v1/smartmeters',
+            path: '/demo',
             method: 'GET'
           });
         } else if (data.status === 403) {
