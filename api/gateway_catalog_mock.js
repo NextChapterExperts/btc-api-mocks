@@ -52,6 +52,26 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
       IsActive: true
     },
     {
+      ID: "OP_API_BUSINESS_PARTNER_SRV_0001",
+      TechnicalServiceName: "OP_API_BUSINESS_PARTNER_SRV",
+      TechnicalServiceVersion: "0001",
+      TechnicalName: "OP_API_BUSINESS_PARTNER_SRV",
+      Version: "0001",
+      Description: "SAP S/4HANA Business Partner OData v2 Service (API Hub Specification)",
+      Title: "OP_API_BUSINESS_PARTNER_SRV",
+      ExternalServiceName: "OP_API_BUSINESS_PARTNER_SRV",
+      ExternalName: "OP_API_BUSINESS_PARTNER_SRV",
+      ServiceUrl: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/",
+      Url: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/",
+      ServiceVersion: "0001",
+      Namespace: "/SAP/",
+      ServiceUrlForMetadata: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata",
+      MetadataUrl: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata",
+      ServiceType: "OData",
+      ReleaseStatus: "RELEASED",
+      IsActive: true
+    },
+    {
       ID: "BTC_UTILITY_ISU_SRV_0001",
       TechnicalServiceName: "BTC_UTILITY_ISU_SRV",
       TechnicalServiceVersion: "0001",
@@ -110,6 +130,10 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, apikey, Accept, X-CSRF-Token, DataServiceVersion, MaxDataServiceVersion');
+    res.setHeader('Access-Control-Expose-Headers', 'DataServiceVersion, MaxDataServiceVersion, X-CSRF-Token, sap-server');
+    res.setHeader('DataServiceVersion', '2.0');
+    res.setHeader('dataserviceversion', '2.0');
+    res.setHeader('sap-server', 'true');
     
     if (recordAuditLog) {
       recordAuditLog({
@@ -185,9 +209,10 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
     <title type="text">${item.Title}</title>
     <summary type="text">${item.Description}</summary>
     <updated>${new Date().toISOString()}</updated>
-    <author><name>SAP Gateway</name></author>
-    <link rel="edit" title="Service" href="${collName}('${item.ID}')" />
-    <link rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/EntitySets" type="application/atom+xml;type=feed" title="EntitySets" href="${collName}('${item.ID}')/EntitySets" />
+    <author><name/></author>
+    <link href="${collName}('${item.ID}')" rel="edit" title="Service" />
+    <link href="${collName}('${item.ID}')" rel="self" title="Service" />
+    <link href="${collName}('${item.ID}')/EntitySets" rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/EntitySets" type="application/atom+xml;type=feed" title="EntitySets" />
     <category term="CATALOGSERVICE.Service" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme" />
     <content type="application/xml">
       <m:properties>
@@ -220,8 +245,8 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
   <id>${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/${collName}</id>
   <title type="text">${collName}</title>
   <updated>${new Date().toISOString()}</updated>
-  <author><name>SAP Gateway</name></author>
-  <link rel="self" title="${collName}" href="${collName}" />${countXML}
+  <author><name/></author>
+  <link href="${collName}" rel="self" title="${collName}" />${countXML}
   ${entriesXML}
 </feed>`;
   }
@@ -233,7 +258,9 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
     <id>${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/EntitySetCollection(Name='${item.Name}',ServiceID='${item.ServiceID}')</id>
     <title type="text">${item.Name}</title>
     <updated>${new Date().toISOString()}</updated>
-    <author><name>SAP Gateway</name></author>
+    <author><name/></author>
+    <link href="EntitySetCollection(Name='${item.Name}',ServiceID='${item.ServiceID}')" rel="edit" title="EntitySet" />
+    <link href="EntitySetCollection(Name='${item.Name}',ServiceID='${item.ServiceID}')" rel="self" title="EntitySet" />
     <category term="CATALOGSERVICE.EntitySet" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme" />
     <content type="application/xml">
       <m:properties>
@@ -248,8 +275,8 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
   <id>${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection('${serviceId}')/EntitySets</id>
   <title type="text">EntitySets</title>
   <updated>${new Date().toISOString()}</updated>
-  <author><name>SAP Gateway</name></author>
-  <link rel="self" title="EntitySets" href="EntitySets" />
+  <author><name/></author>
+  <link href="EntitySets" rel="self" title="EntitySets" />
   ${entriesXML}
 </feed>`;
   }
@@ -272,6 +299,11 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
   // 2. UNIVERSAL MIDDLEWARE FÜR ALLE SAP APIM DISCOVERY VARIANTEN
   // =============================================================
   app.use((req, res, next) => {
+    // Normalisiere doppelte Pfadsegmente, die durch APIM-Konkatenation (PathPrefix + ServiceCollectionUrl) entstehen können
+    if (req.url && req.url.includes('/sap/opu/odata/sap/opu/odata/')) {
+      req.url = req.url.replace(/\/sap\/opu\/odata\/sap\/opu\/odata\//gi, '/sap/opu/odata/');
+    }
+
     const rawPath = (req.path || req.url || '').toLowerCase();
     const origUrl = (req.originalUrl || '').toLowerCase();
     
@@ -360,21 +392,28 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
   <title type="text">${service.Title}</title>
   <summary type="text">${service.Description}</summary>
   <updated>${new Date().toISOString()}</updated>
-  <author><name>SAP Gateway</name></author>
-  <link rel="edit" title="Service" href="ServiceCollection('${service.ID}')" />
+  <author><name/></author>
+  <link href="ServiceCollection('${service.ID}')" rel="edit" title="Service" />
+  <link href="ServiceCollection('${service.ID}')" rel="self" title="Service" />
+  <link href="ServiceCollection('${service.ID}')/EntitySets" rel="http://schemas.microsoft.com/ado/2007/08/dataservices/related/EntitySets" type="application/atom+xml;type=feed" title="EntitySets" />
   <category term="CATALOGSERVICE.Service" scheme="http://schemas.microsoft.com/ado/2007/08/dataservices/scheme" />
   <content type="application/xml">
     <m:properties>
       <d:ID>${service.ID}</d:ID>
       <d:TechnicalServiceName>${service.TechnicalServiceName}</d:TechnicalServiceName>
       <d:TechnicalServiceVersion>${service.TechnicalServiceVersion}</d:TechnicalServiceVersion>
+      <d:TechnicalName>${service.TechnicalName}</d:TechnicalName>
+      <d:Version>${service.Version}</d:Version>
       <d:Description>${service.Description}</d:Description>
       <d:Title>${service.Title}</d:Title>
       <d:ExternalServiceName>${service.ExternalServiceName}</d:ExternalServiceName>
+      <d:ExternalName>${service.ExternalName}</d:ExternalName>
       <d:ServiceUrl>${service.ServiceUrl}</d:ServiceUrl>
+      <d:Url>${service.Url}</d:Url>
       <d:ServiceVersion>${service.ServiceVersion}</d:ServiceVersion>
       <d:Namespace>${service.Namespace}</d:Namespace>
       <d:ServiceUrlForMetadata>${service.ServiceUrlForMetadata}</d:ServiceUrlForMetadata>
+      <d:MetadataUrl>${service.MetadataUrl}</d:MetadataUrl>
       <d:ServiceType>${service.ServiceType}</d:ServiceType>
       <d:ReleaseStatus>${service.ReleaseStatus}</d:ReleaseStatus>
       <d:IsActive m:type="Edm.Boolean">${service.IsActive}</d:IsActive>

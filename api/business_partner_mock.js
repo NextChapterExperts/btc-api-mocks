@@ -418,7 +418,11 @@ module.exports = function setupBusinessPartnerMock(app, getBaseUrl, recordAuditL
   function handleODataRequest(req, res, entityName) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, apikey, Accept');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, apikey, Accept, X-CSRF-Token, DataServiceVersion, MaxDataServiceVersion');
+    res.setHeader('Access-Control-Expose-Headers', 'DataServiceVersion, MaxDataServiceVersion, X-CSRF-Token, sap-server');
+    res.setHeader('DataServiceVersion', '2.0');
+    res.setHeader('dataserviceversion', '2.0');
+    res.setHeader('sap-server', 'true');
     
     if (recordAuditLog) {
       recordAuditLog({
