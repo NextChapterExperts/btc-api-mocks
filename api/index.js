@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.text({ type: ['text/xml', 'application/xml', 'application/soap+xml'] }));
 
 const setupOData = require('./odata_routes');
+const setupBusinessPartnerMock = require('./business_partner_mock');
 
 // Load OpenAPI Specification
 const openApiPath = path.join(__dirname, '..', 'openapi.json');
@@ -113,6 +114,8 @@ function getBaseUrl(req) {
 
 // Hook OData $metadata middleware
 setupOData(app, getBaseUrl, meterDatabase);
+// Hook SAP S/4HANA Business Partner OData v2 Mock Service (Public / No Auth)
+setupBusinessPartnerMock(app, getBaseUrl, recordAuditLog);
 
 // =============================================================
 // BTP INBOUND TOKEN & INTEGRATION CELL GATEWAY
@@ -1010,7 +1013,7 @@ app.get('/', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BTC Energy API Mock Suite · 4 Protokolle</title>
+  <title>BTC Energy &amp; SAP Business Partner Mock Suite · 5 Protokolle</title>
   <style>
     :root {
       --primary: #0A58CA;       /* Freundliches BTP Königsblau */
@@ -1464,10 +1467,10 @@ app.get('/', (req, res) => {
       <div class="studio-stage">
 
         <!-- ========================================== -->
-        <!-- VIEW 1: DIE 4 MOCK-SCHNITTSTELLEN -->
+        <!-- VIEW 1: DIE 5 MOCK-SCHNITTSTELLEN -->
         <!-- ========================================== -->
         <div id="studio-view-mocks">
-          <!-- 4 Schnittstellen Navigation Kacheln -->
+          <!-- 5 Schnittstellen Navigation Kacheln -->
           <div class="protocol-grid">
             <div class="protocol-card selected" onclick="selectProtocol('rest')">
               <h3>1. REST &amp; OAuth 2.0 <span class="badge">OpenAPI 3.0</span></h3>
@@ -1485,6 +1488,10 @@ app.get('/', (req, res) => {
               <h3>4. Legacy SOAP 1.1 <span class="badge">WSDL 1.1</span></h3>
               <p>XML Web Service mit Envelope</p>
             </div>
+            <div class="protocol-card" onclick="selectProtocol('odata-bp')">
+              <h3>5. SAP Business Partner <span class="badge" style="background:#DCFCE7; color:#166534;">No Auth / APIM Target</span></h3>
+              <p>S/4HANA OData v2 (API_BUSINESS_PARTNER)</p>
+            </div>
           </div>
 
           <!-- MOCK LIVE-TEST COCKPIT -->
@@ -1492,7 +1499,7 @@ app.get('/', (req, res) => {
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
               <div>
                 <b style="color:#166534; font-size:0.9rem;">Mock-Backend Direkttest (Schnellprüfung ohne Terminal)</b>
-                <div style="color:#475569; font-size:0.78rem;">Generiere ein echtes Provider-Token und teste die 4 Protokolle nativ:</div>
+                <div style="color:#475569; font-size:0.78rem;">Teste alle 5 Mock-Schnittstellen direkt aus dem Browser:</div>
               </div>
               <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                 <select id="mockEndpointSelect" style="padding:6px 10px; border:1px solid #CBD5E1; border-radius:6px; font-size:0.78rem; font-weight:600; color:#1E293B; background:#FFFFFF;" onchange="onMockEndpointChange(this.value)">
@@ -1500,6 +1507,7 @@ app.get('/', (req, res) => {
                   <option value="odata-v2">2. SAP OData v2 (/odata/v2/utility/MeterReadingSet)</option>
                   <option value="odata-v4">3. SAP OData v4 (/odata/v4/utility/MeterReadings)</option>
                   <option value="soap">4. Legacy SOAP (/soap/utility - GetMeterReading)</option>
+                  <option value="odata-bp">5. SAP S/4HANA Business Partner (/A_BusinessPartner - No Auth)</option>
                 </select>
                 <button id="btnFetchToken" class="btn-token" style="background:#059669;" onclick="fetchLiveToken()">
                   <span>Mock-Token abrufen</span>
@@ -1760,6 +1768,156 @@ tokenServiceURL = ${hostUrl}/oauth/token
 clientId = btc-demo-client
 clientSecret = btc-demo-secret-2026
 IntegrationCell.Include = true</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- SCHNITTSTELLE 5: SAP S/4HANA ODATA V2 BUSINESS PARTNER (NO AUTH / PROXY TARGET) -->
+          <div id="section-odata-bp" class="protocol-section" style="display:none;">
+            <div class="note" style="border-left-color: #10B981; background: #ECFDF5;">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                <div>
+                  <b style="font-size:0.95rem; color:#065F46;">Schnittstelle 5: SAP S/4HANA Business Partner (OData v2)</b>
+                  <span class="badge" style="background:#A7F3D0; color:#065F46; margin-left:6px; font-weight:700;">No Auth / APIM Target</span><br/>
+                  <span style="color:#047857; font-size:0.82rem;">Offizielle Spezifikation <code>OP_API_BUSINESS_PARTNER_SRV</code> aus dem SAP Business Accelerator Hub. Öffentlich erreichbar ohne Authentifizierung &ndash; perfekt geeignet, um im SAP BTP API Management einen geschützten API-Proxy (Rate-Limits, Verify-API-Key, Caching etc.) zu demonstrieren.</span>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata" target="_blank" rel="noopener noreferrer" class="btn-link primary" style="background:#059669; border-color:#059669;">EDMX $metadata</a>
+                  <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/?$format=json" target="_blank" rel="noopener noreferrer" class="btn-link">Service Root</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="tabs-header">
+              <button class="tab-btn active" onclick="switchInnerTab('odata-bp', 'direct')">1. Endpunkte &amp; 1-Klick-Tests</button>
+              <button class="tab-btn" onclick="switchInnerTab('odata-bp', 'proxyguide')">2. SAP API-Proxy Anleitung</button>
+              <button class="tab-btn" onclick="switchInnerTab('odata-bp', 'curl')">3. cURL &amp; Postman</button>
+            </div>
+
+            <div id="odata-bp-direct" class="tab-pane active">
+              
+              <!-- Quick Test Bar -->
+              <div style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:12px; margin-bottom:16px;">
+                <div style="font-weight:700; font-size:0.85rem; color:#1E293B; margin-bottom:8px;">⚡ 1-Klick Schnelltests in Konsole:</div>
+                <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                  <button class="btn-sm-action primary" style="background:#059669;" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&$format=json')">Top 5 Geschäftspartner</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')?$format=json')">Einzelsatz BTC AG (1000010)</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')/to_BusinessPartnerAddress?$format=json')">Navigation: Adresse (BTC)</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_Customer?$format=json')">Alle Kunden (A_Customer)</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_Supplier?$format=json')">Alle Lieferanten (A_Supplier)</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$filter=BusinessPartnerCategory eq \\'2\\'&$format=json')">Filter: Nur Organisationen</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata')">$metadata XML</button>
+                </div>
+              </div>
+
+              <!-- Endpoint: Service Base -->
+              <div class="endpoint-card">
+                <div class="endpoint-header-row">
+                  <div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>Target URL für SAP API Proxy (Service Root)</span></div>
+                  <span class="meta-tag" style="background:#DCFCE7; color:#166534; font-weight:700;">Keine Auth erforderlich</span>
+                </div>
+                <div class="url-display-bar">
+                  <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER', this)">Kopieren</button>
+                  </div>
+                </div>
+                <div class="endpoint-meta">
+                  <span>OData Version:</span> <span class="meta-tag">2.0</span>
+                  <span>EntitySets:</span> <span class="meta-tag">A_BusinessPartner, A_Customer, A_Supplier, A_BusinessPartnerAddress, A_BusinessPartnerRole, A_BusinessPartnerBank</span>
+                </div>
+              </div>
+
+              <!-- Endpoint: A_BusinessPartner -->
+              <div class="endpoint-card">
+                <div class="endpoint-header-row">
+                  <div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>A_BusinessPartner (Geschäftspartnerliste)</span></div>
+                  <button class="btn-sm-action primary" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&$format=json')">In Konsole testen</button>
+                </div>
+                <div class="url-display-bar">
+                  <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&amp;$format=json" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&amp;$format=json</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&amp;$format=json" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&$format=json', this)">Kopieren</button>
+                  </div>
+                </div>
+                <div class="endpoint-meta">
+                  <span>Parameter:</span> <span class="meta-tag">$filter</span> <span class="meta-tag">$top</span> <span class="meta-tag">$skip</span> <span class="meta-tag">$select</span> <span class="meta-tag">$format=json</span>
+                </div>
+              </div>
+
+              <!-- Endpoint: A_BusinessPartner Single Entity -->
+              <div class="endpoint-card">
+                <div class="endpoint-header-row">
+                  <div class="endpoint-title"><span class="method-badge badge-get">GET</span><span>A_BusinessPartner('1000010') (Einzelsatz mit Navigation)</span></div>
+                  <button class="btn-sm-action primary" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')?$format=json')">In Konsole testen</button>
+                </div>
+                <div class="url-display-bar">
+                  <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner('1000010')?$format=json" target="_blank" rel="noopener noreferrer" class="url-display-link">${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner('1000010')?$format=json</a>
+                  <div style="display:flex; gap:6px; align-items:center;">
+                    <a href="${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner('1000010')?$format=json" target="_blank" rel="noopener noreferrer" class="copy-btn" style="text-decoration:none; display:inline-flex; align-items:center;">Öffnen</a>
+                    <button class="copy-btn" onclick="copyToClipboard('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')?$format=json', this)">Kopieren</button>
+                  </div>
+                </div>
+                <div class="endpoint-meta">
+                  <span>Navigation Links:</span>
+                  <a href="javascript:void(0)" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')/to_BusinessPartnerAddress?$format=json')" style="color:#0284C7; font-weight:600; font-size:0.75rem; text-decoration:none;">to_BusinessPartnerAddress</a> |
+                  <a href="javascript:void(0)" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')/to_Customer?$format=json')" style="color:#0284C7; font-weight:600; font-size:0.75rem; text-decoration:none;">to_Customer</a> |
+                  <a href="javascript:void(0)" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')/to_Supplier?$format=json')" style="color:#0284C7; font-weight:600; font-size:0.75rem; text-decoration:none;">to_Supplier</a> |
+                  <a href="javascript:void(0)" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')/to_BusinessPartnerRole?$format=json')" style="color:#0284C7; font-weight:600; font-size:0.75rem; text-decoration:none;">to_BusinessPartnerRole</a> |
+                  <a href="javascript:void(0)" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner(\\'1000010\\')/to_BusinessPartnerBank?$format=json')" style="color:#0284C7; font-weight:600; font-size:0.75rem; text-decoration:none;">to_BusinessPartnerBank</a>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Tab 2: SAP API Proxy Anleitung -->
+            <div id="odata-bp-proxyguide" class="tab-pane">
+              <div style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:16px; margin-bottom:16px;">
+                <h4 style="margin:0 0 10px 0; color:#0A58CA; font-size:1rem;">Anleitung: API Proxy in SAP Integration Suite (API Management) anlegen</h4>
+                <ol style="margin:0; padding-left:20px; line-height:1.6; font-size:0.85rem; color:#334155;">
+                  <li><b>API Management Konsole öffnen:</b> Navigiere in deiner SAP BTP Integration Suite auf <i>Configure</i> &rarr; <i>APIs</i> &rarr; <i>Create</i>.</li>
+                  <li><b>Quelle wählen:</b> Wähle <b>URL</b> (oder <b>OData</b> Service Discovery).</li>
+                  <li><b>Target URL einfügen:</b> Kopiere folgende URL in das Feld <i>URL</i>:<br/>
+                    <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px; font-weight:600;">${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER</code>
+                  </li>
+                  <li><b>API Proxy Name &amp; Base Path:</b><br/>
+                    Name: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">API_BUSINESS_PARTNER_V2</code><br/>
+                    Title: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">SAP S/4HANA Business Partner Proxy</code><br/>
+                    API Base Path: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">/s4/business-partner</code>
+                  </li>
+                  <li><b>Target Endpoint Authentifizierung:</b> Stelle sicher, dass die Authentifizierung für den Zielendpunkt auf <b>None</b> steht (da dieses Backend als Public Mock fungiert).</li>
+                  <li><b>Proxy speichern &amp; deployen:</b> Klicke auf <i>Create</i> &rarr; <i>Deploy</i>.</li>
+                </ol>
+              </div>
+
+              <div class="note note-purple">
+                <b style="color:#6B21A8;">💡 Typische Schulungs- &amp; Demo-Szenarien für diesen Proxy:</b>
+                <ul style="margin:6px 0 0 0; padding-left:18px; font-size:0.82rem; line-height:1.5;">
+                  <li><b>Verify API Key Policy:</b> Schütze den Proxy mit einem BTP App Developer Key (API-Schlüssel), sodass Konsumenten ohne Key abgewiesen werden, während das Backend selbst frei bleibt.</li>
+                  <li><b>Spike Arrest / Quota Policy:</b> Begrenze Anfragen auf 10 Anfragen pro Minute (z.B. zur Lastbegrenzung teurer S/4HANA Queries).</li>
+                  <li><b>Response Cache Policy:</b> Caching von <code>A_BusinessPartner</code> Ergebnissen im APIM Cache für 300 Sekunden.</li>
+                  <li><b>Data Masking / JSON Threat Protection:</b> Schutz vor zu großen Payloads und Ausblenden sensibler Felder.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Tab 3: cURL & Postman -->
+            <div id="odata-bp-curl" class="tab-pane">
+              <div class="code-box">
+                <div class="code-box-header"><span>cURL: Alle Geschäftspartner (Top 5)</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+                <pre><code>curl -s "${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?\$top=5&amp;\$format=json"</code></pre>
+              </div>
+
+              <div class="code-box">
+                <div class="code-box-header"><span>cURL: Einzelsatz mit $metadata</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+                <pre><code>curl -s "${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner('1000010')?\$format=json"</code></pre>
+              </div>
+
+              <div class="code-box">
+                <div class="code-box-header"><span>cURL: OData EDMX Metadaten für SAP APIM Import</span><button class="copy-btn" onclick="copyCode(this)">Kopieren</button></div>
+                <pre><code>curl -s "${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/\$metadata"</code></pre>
               </div>
             </div>
           </div>
@@ -2441,6 +2599,14 @@ IntegrationCell.Include = true</code></pre>
         },
         body: '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:btc="http://btc.de/energy/metering/soap"><soapenv:Header/><soapenv:Body><btc:GetMeterReadingRequest><btc:MeterId>DE-OL-MTR-002</btc:MeterId></btc:GetMeterReadingRequest></soapenv:Body></soapenv:Envelope>',
         explanation: '<b>SOAP 1.1 Aufruf erfolgreich:</b> Der XML-Webservice hat den SOAP-Envelope und die SOAPAction verarbeitet und liefert valides SOAP-Response XML zurück.'
+      },
+      'odata-bp': {
+        name: 'SAP S/4HANA Business Partner OData v2',
+        method: 'GET',
+        url: '/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$top=5&$format=json',
+        headers: { 'Accept': 'application/json' },
+        noAuth: true,
+        explanation: '<b>SAP S/4HANA Business Partner OData v2 Aufruf erfolgreich:</b> Das Backend antwortet ohne Authentifizierung im standardisierten OData v2 JSON-Format. Ideal für Demonstrationen von API Proxies im SAP BTP API Management!'
       }
     };
 
@@ -2476,14 +2642,14 @@ IntegrationCell.Include = true</code></pre>
       if (btn) btn.classList.add('loading');
 
       try {
-        if (!currentLiveToken) {
+        if (!config.noAuth && !currentLiveToken) {
           if (statusBadge) statusBadge.innerText = 'Hole zuerst Provider-Token...';
           await fetchLiveToken();
         }
 
         const startTime = Date.now();
         const headers = { ...config.headers };
-        if (currentLiveToken) {
+        if (!config.noAuth && currentLiveToken) {
           headers['Authorization'] = 'Bearer ' + currentLiveToken;
         }
 
@@ -2516,8 +2682,8 @@ IntegrationCell.Include = true</code></pre>
           addClientAuditLog({
             status: res.status,
             client: 'Mock Direct Client (Browser)',
-            authMethod: 'Bearer (Direct Mock Auth)',
-            tokenPreview: currentLiveToken ? (currentLiveToken.substring(0, 20) + '...') : 'kein Token',
+            authMethod: config.noAuth ? 'No Auth (Public APIM Target)' : 'Bearer (Direct Mock Auth)',
+            tokenPreview: config.noAuth ? 'öffentlich / kein Token nötig' : (currentLiveToken ? (currentLiveToken.substring(0, 20) + '...') : 'kein Token'),
             path: config.url,
             method: config.method
           });
@@ -2547,6 +2713,70 @@ IntegrationCell.Include = true</code></pre>
         }
         if (codeEl) codeEl.innerText = err.message;
         if (explanation) explanation.innerText = '';
+      }
+    }
+
+    async function testCustomUrl(url, method = 'GET') {
+      selectProtocol('odata-bp');
+      const resultBox = document.getElementById('mockLiveResultBox');
+      const statusBadge = document.getElementById('mockLiveStatusBadge');
+      const endpointSpan = document.getElementById('mockLiveEndpoint');
+      const durationSpan = document.getElementById('mockLiveDuration');
+      const codeEl = document.getElementById('mockLiveCode');
+      const explanation = document.getElementById('mockLiveExplanation');
+
+      if (resultBox) resultBox.style.display = 'block';
+      if (statusBadge) {
+        statusBadge.style.color = '#38BDF8';
+        statusBadge.innerText = 'Sende Request...';
+      }
+      if (endpointSpan) endpointSpan.innerText = method + ' ' + url;
+      if (durationSpan) durationSpan.innerText = '';
+      if (codeEl) codeEl.innerText = 'Lade Daten vom Mock-Backend...';
+      if (explanation) explanation.innerText = '';
+
+      try {
+        const startTime = Date.now();
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Accept': 'application/json, application/xml, text/xml, */*' }
+        });
+        const durationMs = Date.now() - startTime;
+
+        const contentType = res.headers.get('content-type') || '';
+        let displayData;
+        if (contentType.includes('application/json')) {
+          const json = await res.json();
+          displayData = JSON.stringify(json, null, 2);
+        } else {
+          displayData = await res.text();
+        }
+
+        if (statusBadge) {
+          statusBadge.style.color = res.ok ? '#4ADE80' : '#F87171';
+          statusBadge.innerText = 'HTTP ' + res.status + ' ' + (res.statusText || (res.ok ? 'OK' : 'Error'));
+        }
+        if (durationSpan) durationSpan.innerText = 'Dauer: ' + durationMs + ' ms';
+        if (codeEl) codeEl.innerText = displayData;
+        if (explanation) {
+          explanation.innerHTML = '<b>Direktaufruf SAP S/4HANA Business Partner:</b> ' + (res.ok ? 'Erfolgreich ausgeführt (Public Mock / No Auth).' : 'Fehler beim Abruf.');
+        }
+
+        addClientAuditLog({
+          status: res.status,
+          client: 'Mock Direct Client (Browser)',
+          authMethod: 'No Auth (Public APIM Target)',
+          tokenPreview: 'öffentlich / kein Token',
+          path: url,
+          method: method
+        });
+        setTimeout(refreshAuditLogs, 300);
+      } catch (err) {
+        if (statusBadge) {
+          statusBadge.style.color = '#F87171';
+          statusBadge.innerText = 'Fehler: ' + err.message;
+        }
+        if (codeEl) codeEl.innerText = err.message;
       }
     }
 
