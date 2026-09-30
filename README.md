@@ -11,6 +11,7 @@
 | :--- | :--- | :--- | :---: |
 | **Smart Meter Energy Services** | REST (OpenAPI 3.0.3) | **OAuth 2.0 Client Credentials** (`/oauth/token`) & **API Key** | 🟢 Bereit |
 | **SAP S/4HANA Business Partner** | OData v2 (`OP_API_BUSINESS_PARTNER_SRV`) | **Keine (Public / No Auth)** &ndash; Ideal für API-Proxy | 🟢 Bereit |
+| **SAP Gateway Catalog Service** | OData v2 (`/IWFND/CATALOGSERVICE;v=2`) | **Keine (Public / No Auth)** &ndash; Automatische Service-Discovery | 🟢 Bereit |
 | **IS-U Meter-to-Cash Service** | OData v2 / v4 (`$metadata`) | OAuth 2.0 Bearer | 🟢 Bereit |
 | **Legacy Marktkommunikation** | SOAP / XML (WSDL 1.1) | OAuth 2.0 Bearer | 🟢 Bereit |
 
@@ -78,4 +79,24 @@ IntegrationCell.Include = true
 | **A_BusinessPartnerAddress** | `GET .../A_BusinessPartnerAddress?$format=json` | Alle Adressen |
 | **A_BusinessPartnerRole** | `GET .../A_BusinessPartnerRole?$format=json` | Rollen (z. B. FLCU00, FLVN00) |
 | **A_BusinessPartnerBank** | `GET .../A_BusinessPartnerBank?$format=json` | Bankverbindungen (IBANs) |
+
+---
+
+## 🗂️ 3. SAP Gateway Catalog Service (Automatisierte Service-Discovery im APIM)
+
+Damit Sie im **SAP BTP API Management** einen klassischen **API Provider** anlegen können und SAP APIM beim Erstellen eines API-Proxys automatisch alle verfügbaren OData-Services findet, simuliert dieser Server den standardmäßigen SAP Gateway Catalog Service (`/IWFND/CATALOGSERVICE;v=2`).
+
+### Einstellungen im SAP BTP API Provider Dialog
+* **Provider Typ:** `SAP Gateway` oder `Internet`
+* **Host:** `<deine-app>.vercel.app` (ohne https://)
+* **Port:** `443`
+* **Path Prefix:** `/sap/opu/odata` *(kann auch leer gelassen werden)*
+* **Service Collection URL:** `/IWFND/CATALOGSERVICE;v=2/ServiceCollection`
+* **Authentication:** `None`
+
+### Verfügbare Endpunkte
+* **ServiceCollection (JSON):** `GET /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection?$format=json`
+* **ServiceCollection (Atom XML):** `GET /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection` (mit Header `Accept: application/atom+xml`)
+* **Katalog-Metadaten:** `GET /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/$metadata`
+
 

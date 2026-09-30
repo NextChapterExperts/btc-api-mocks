@@ -11,6 +11,7 @@ app.use(express.text({ type: ['text/xml', 'application/xml', 'application/soap+x
 
 const setupOData = require('./odata_routes');
 const setupBusinessPartnerMock = require('./business_partner_mock');
+const setupGatewayCatalogMock = require('./gateway_catalog_mock');
 
 // Load OpenAPI Specification
 const openApiPath = path.join(__dirname, '..', 'openapi.json');
@@ -116,6 +117,8 @@ function getBaseUrl(req) {
 setupOData(app, getBaseUrl, meterDatabase);
 // Hook SAP S/4HANA Business Partner OData v2 Mock Service (Public / No Auth)
 setupBusinessPartnerMock(app, getBaseUrl, recordAuditLog);
+// Hook SAP NetWeaver Gateway Catalog Service Mock (IWFND/CATALOGSERVICE;v=2)
+setupGatewayCatalogMock(app, getBaseUrl, recordAuditLog);
 
 // =============================================================
 // BTP INBOUND TOKEN & INTEGRATION CELL GATEWAY
@@ -1806,7 +1809,9 @@ IntegrationCell.Include = true</code></pre>
                   <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_Customer?$format=json')">Alle Kunden (A_Customer)</button>
                   <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_Supplier?$format=json')">Alle Lieferanten (A_Supplier)</button>
                   <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/A_BusinessPartner?$filter=BusinessPartnerCategory eq \\'2\\'&$format=json')">Filter: Nur Organisationen</button>
-                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata')">$metadata XML</button>
+                  <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata')">BP $metadata XML</button>
+                  <button class="btn-sm-action" style="background:#0369A1; color:#fff;" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection?$format=json')">🏛️ Gateway ServiceCollection (JSON)</button>
+                  <button class="btn-sm-action" style="background:#0284C7; color:#fff;" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/$metadata')">🏛️ Gateway Catalog $metadata</button>
                 </div>
               </div>
 
@@ -1875,20 +1880,36 @@ IntegrationCell.Include = true</code></pre>
             <!-- Tab 2: SAP API Proxy Anleitung -->
             <div id="odata-bp-proxyguide" class="tab-pane">
               <div style="background:#F8FAFC; border:1px solid #CBD5E1; border-radius:8px; padding:16px; margin-bottom:16px;">
-                <h4 style="margin:0 0 10px 0; color:#0A58CA; font-size:1rem;">Anleitung: API Proxy in SAP Integration Suite (API Management) anlegen</h4>
-                <ol style="margin:0; padding-left:20px; line-height:1.6; font-size:0.85rem; color:#334155;">
-                  <li><b>API Management Konsole öffnen:</b> Navigiere in deiner SAP BTP Integration Suite auf <i>Configure</i> &rarr; <i>APIs</i> &rarr; <i>Create</i>.</li>
-                  <li><b>Quelle wählen:</b> Wähle <b>URL</b> (oder <b>OData</b> Service Discovery).</li>
-                  <li><b>Target URL einfügen:</b> Kopiere folgende URL in das Feld <i>URL</i>:<br/>
-                    <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px; font-weight:600;">${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER</code>
+                <h4 style="margin:0 0 10px 0; color:#0A58CA; font-size:1rem;">Weg A: Über SAP API Provider (Automatischer Service-Katalog / Discovery)</h4>
+                <p style="font-size:0.83rem; color:#475569; margin:0 0 10px 0;">
+                  Hier simuliert das Mock-Backend den echten <b>SAP NetWeaver Gateway Catalog Service (<code>IWFND/CATALOGSERVICE;v=2</code>)</b>. Bei der Proxy-Erstellung liest SAP APIM die <code>ServiceCollection</code> aus und bietet alle Services zur Auswahl an:
+                </p>
+                <ol style="margin:0; padding-left:20px; line-height:1.6; font-size:0.84rem; color:#334155;">
+                  <li><b>API Provider anlegen:</b> In der SAP Integration Suite &rarr; <i>Configure</i> &rarr; <i>API Providers</i> &rarr; <i>Create</i>.</li>
+                  <li><b>Verbindungsdaten eintragen:</b><br/>
+                    &bull; Name: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">BTC_GATEWAY_MOCK</code><br/>
+                    &bull; Type: <b>Internet</b><br/>
+                    &bull; Host: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">${hostUrl.replace(/^https?:\/\//, '')}</code><br/>
+                    &bull; Port: <b>443</b> (oder 80 bei lokalem HTTP) &bull; Use SSL: <b>aktiviert</b>
                   </li>
-                  <li><b>API Proxy Name &amp; Base Path:</b><br/>
-                    Name: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">API_BUSINESS_PARTNER_V2</code><br/>
-                    Title: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">SAP S/4HANA Business Partner Proxy</code><br/>
-                    API Base Path: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">/s4/business-partner</code>
+                  <li><b>Catalog Service Settings:</b><br/>
+                    &bull; Path Prefix: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px; font-weight:600;">/sap/opu/odata</code><br/>
+                    &bull; Service Collection URL: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px; font-weight:600;">/IWFND/CATALOGSERVICE;v=2/ServiceCollection</code><br/>
+                    &bull; Authentication: <b>None</b> (Public Mock)
                   </li>
-                  <li><b>Target Endpoint Authentifizierung:</b> Stelle sicher, dass die Authentifizierung für den Zielendpunkt auf <b>None</b> steht (da dieses Backend als Public Mock fungiert).</li>
-                  <li><b>Proxy speichern &amp; deployen:</b> Klicke auf <i>Create</i> &rarr; <i>Deploy</i>.</li>
+                  <li><b>Test Connection:</b> Auf <i>Test Connection</i> klicken (Ergebnis: 200 OK).</li>
+                  <li><b>API Proxy aus Provider generieren:</b> Auf <i>Develop</i> &rarr; <i>APIs</i> &rarr; <i>Create</i> &rarr; Source: <b>API Provider</b> &rarr; <code>BTC_GATEWAY_MOCK</code> auswählen.<br/>
+                    &rarr; SAP APIM lädt die <b>ServiceCollection</b> und zeigt <code>API_BUSINESS_PARTNER</code> und <code>BTC_UTILITY_ISU_SRV</code> zur Auswahl an!
+                  </li>
+                </ol>
+
+                <hr style="border:0; border-top:1px solid #E2E8F0; margin:14px 0;"/>
+
+                <h4 style="margin:0 0 10px 0; color:#0A58CA; font-size:1rem;">Weg B: Direkt über URL (Manuelle Proxy-Erstellung)</h4>
+                <ol style="margin:0; padding-left:20px; line-height:1.6; font-size:0.84rem; color:#334155;">
+                  <li>In <i>Develop</i> &rarr; <i>APIs</i> &rarr; <i>Create</i> als Quelle <b>URL</b> wählen.</li>
+                  <li>URL: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px; font-weight:600;">${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER</code></li>
+                  <li>API Base Path: <code style="background:#E2E8F0; padding:2px 6px; border-radius:4px;">/s4/business-partner</code> &bull; Auth: <b>None</b>.</li>
                 </ol>
               </div>
 
