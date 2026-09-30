@@ -19,6 +19,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
       Version: "0001",
       Description: "SAP S/4HANA Business Partner (A2X) OData v2 Service",
       Title: "API_BUSINESS_PARTNER",
+      Author: "SAP Gateway",
       ExternalServiceName: "API_BUSINESS_PARTNER",
       ExternalName: "API_BUSINESS_PARTNER",
       ServiceUrl: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/",
@@ -39,6 +40,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
       Version: "0001",
       Description: "SAP S/4HANA Business Partner OData v2 Service (SRV Alias)",
       Title: "API_BUSINESS_PARTNER_SRV",
+      Author: "SAP Gateway",
       ExternalServiceName: "API_BUSINESS_PARTNER_SRV",
       ExternalName: "API_BUSINESS_PARTNER_SRV",
       ServiceUrl: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/",
@@ -59,6 +61,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
       Version: "0001",
       Description: "SAP S/4HANA Business Partner OData v2 Service (API Hub Specification)",
       Title: "OP_API_BUSINESS_PARTNER_SRV",
+      Author: "SAP Gateway",
       ExternalServiceName: "OP_API_BUSINESS_PARTNER_SRV",
       ExternalName: "OP_API_BUSINESS_PARTNER_SRV",
       ServiceUrl: "/sap/opu/odata/sap/API_BUSINESS_PARTNER/",
@@ -79,6 +82,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
       Version: "0001",
       Description: "BTC IS-U Meter-to-Cash Utility Readings Service",
       Title: "BTC_UTILITY_ISU_SRV",
+      Author: "BTC AG",
       ExternalServiceName: "BTC_UTILITY_ISU_SRV",
       ExternalName: "BTC_UTILITY_ISU_SRV",
       ServiceUrl: "/odata/v2/utility/",
@@ -99,6 +103,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
       Version: "0001",
       Description: "BTC Smart Meter Energy Ingestion & Load Profiles",
       Title: "BTC_SMARTMETER_SRV",
+      Author: "BTC AG",
       ExternalServiceName: "BTC_SMARTMETER_SRV",
       ExternalName: "BTC_SMARTMETER_SRV",
       ServiceUrl: "/api/v1/",
@@ -165,6 +170,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
         <Property Name="Version" Type="Edm.String" MaxLength="10" sap:label="Version" />
         <Property Name="Description" Type="Edm.String" MaxLength="255" sap:label="Beschreibung" />
         <Property Name="Title" Type="Edm.String" MaxLength="100" sap:label="Titel" />
+        <Property Name="Author" Type="Edm.String" MaxLength="100" sap:label="Autor" />
         <Property Name="ExternalServiceName" Type="Edm.String" MaxLength="100" sap:label="Externer Name" />
         <Property Name="ExternalName" Type="Edm.String" MaxLength="100" sap:label="Externer Name" />
         <Property Name="ServiceUrl" Type="Edm.String" MaxLength="255" sap:label="Service-URL" />
@@ -201,11 +207,12 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
 </edmx:Edmx>`;
 
   // Helper zum Erzeugen des Atom/XML Formats für ServiceCollection
-  function renderServiceCollectionXML(items, baseUrl, collectionName, totalCount) {
+  function renderServiceCollectionXML(items, baseUrl, collectionName, totalCount, serviceRoot) {
     const collName = collectionName || "ServiceCollection";
+    const sRoot = serviceRoot || "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/";
     const entriesXML = items.map(item => `
   <entry>
-    <id>${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/${collName}('${item.ID}')</id>
+    <id>${baseUrl}${sRoot}${collName}('${item.ID}')</id>
     <title type="text">${item.Title}</title>
     <summary type="text">${item.Description}</summary>
     <updated>${new Date().toISOString()}</updated>
@@ -223,6 +230,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
         <d:Version>${item.Version}</d:Version>
         <d:Description>${item.Description}</d:Description>
         <d:Title>${item.Title}</d:Title>
+        <d:Author>${item.Author || 'SAP Gateway'}</d:Author>
         <d:ExternalServiceName>${item.ExternalServiceName}</d:ExternalServiceName>
         <d:ExternalName>${item.ExternalName}</d:ExternalName>
         <d:ServiceUrl>${item.ServiceUrl}</d:ServiceUrl>
@@ -241,8 +249,8 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
     const countXML = totalCount !== undefined ? `\n  <m:count>${totalCount}</m:count>` : '';
 
     return `<?xml version="1.0" encoding="utf-8"?>
-<feed xml:base="${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/" xmlns="http://www.w3.org/2005/Atom" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices">
-  <id>${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/${collName}</id>
+<feed xml:base="${baseUrl}${sRoot}" xmlns="http://www.w3.org/2005/Atom" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:d="http://schemas.microsoft.com/ado/2007/08/dataservices">
+  <id>${baseUrl}${sRoot}${collName}</id>
   <title type="text">${collName}</title>
   <updated>${new Date().toISOString()}</updated>
   <author><name/></author>
@@ -282,9 +290,10 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
   }
 
   // Helper für Service Document (AtomPub XML)
-  function renderServiceDocumentXML(baseUrl) {
+  function renderServiceDocumentXML(baseUrl, serviceRoot) {
+    const sRoot = serviceRoot || "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/";
     return `<?xml version="1.0" encoding="utf-8"?>
-<service xml:base="${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/" xmlns="http://www.w3.org/2007/app" xmlns:atom="http://www.w3.org/2005/Atom">
+<service xml:base="${baseUrl}${sRoot}" xmlns="http://www.w3.org/2007/app" xmlns:atom="http://www.w3.org/2005/Atom">
   <workspace>
     <atom:title>Default</atom:title>
     <collection href="ServiceCollection"><atom:title>ServiceCollection</atom:title></collection>
@@ -442,38 +451,71 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
         }
 
         if (filter) {
-          // Extrahiere ggf. gesuchte Namen aus startswith oder eq
+          // Extrahiere ggf. gesuchte Namen aus startswith oder substringof
           const matchStart = filter.match(/startswith\s*\(\s*(?:tolower\s*\(\s*)?(\w+)(?:\s*\))?\s*,\s*'([^']+)'\s*\)/i);
-          const matchEq = filter.match(/(\w+)\s+eq\s+'([^']+)'/i);
           const matchSubstr = filter.match(/substringof\s*\(\s*'([^']+)'\s*,\s*(?:tolower\s*\(\s*)?(\w+)(?:\s*\))?\s*\)/i);
 
           if (matchStart) {
             const val = matchStart[2].toLowerCase();
-            items = items.filter(s => 
+            const filtered = items.filter(s => 
               s.TechnicalServiceName.toLowerCase().startsWith(val) ||
-              s.Title.toLowerCase().startsWith(val)
+              s.Title.toLowerCase().startsWith(val) ||
+              s.ID.toLowerCase().startsWith(val)
             );
+            if (filtered.length > 0) items = filtered;
           } else if (matchSubstr) {
             const val = matchSubstr[1].toLowerCase();
-            items = items.filter(s => 
+            const filtered = items.filter(s => 
               s.TechnicalServiceName.toLowerCase().includes(val) ||
-              s.Description.toLowerCase().includes(val)
+              s.Title.toLowerCase().includes(val) ||
+              s.Description.toLowerCase().includes(val) ||
+              s.ID.toLowerCase().includes(val)
             );
-          } else if (matchEq && !filter.includes('isactive eq true') && !filter.includes('servicetype eq')) {
-            const val = matchEq[2].toLowerCase();
-            items = items.filter(s => 
-              s.TechnicalServiceName.toLowerCase() === val ||
-              s.ID.toLowerCase() === val
-            );
+            if (filtered.length > 0) items = filtered;
+          } else {
+            // Nur filtern, wenn es sich um einen konkreten Namen/ID-Filter handelt (nicht System-Attribute wie isactive/servicetype/releasestatus)
+            const matchNameEq = filter.match(/(?:TechnicalServiceName|Title|TechnicalName|ID)\s+eq\s+'([^']+)'/i);
+            if (matchNameEq) {
+              const val = matchNameEq[1].toLowerCase();
+              const filtered = items.filter(s => 
+                s.TechnicalServiceName.toLowerCase() === val ||
+                s.ID.toLowerCase() === val ||
+                s.TechnicalName.toLowerCase() === val
+              );
+              if (filtered.length > 0) items = filtered;
+            }
           }
         }
 
-        // Falls durch Filter fälschlicherweise alles rausgefiltert wurde, Business Partner als Mindest-Schnittstelle erhalten
+        // Falls durch Filter wider Erwarten alles rausgefiltert wurde, Business Partner als Mindest-Schnittstelle erhalten
         if (items.length === 0) {
           items = [catalogServices[0]];
         }
 
+        // Sortierung ($orderby)
+        if (req.query.$orderby) {
+          const parts = req.query.$orderby.trim().split(/\s+/);
+          const field = parts[0];
+          const isDesc = parts[1] && parts[1].toLowerCase() === 'desc';
+          items.sort((a, b) => {
+            const valA = (a[field] !== undefined ? a[field] : '').toString().toLowerCase();
+            const valB = (b[field] !== undefined ? b[field] : '').toString().toLowerCase();
+            return isDesc ? valB.localeCompare(valA) : valA.localeCompare(valB);
+          });
+        }
+
         const totalCount = items.length;
+
+        // OData $count Handling (MUSS text/plain; charset=utf-8 und String zurückgeben, damit SAPUI5 ODataModel nicht abbricht)
+        const isCount = rawPath.endsWith('/$count') || origUrl.endsWith('/$count') ||
+                        rawPath.includes('/$count') || origUrl.includes('/$count') ||
+                        rawPath.includes('/%24count') || origUrl.includes('/%24count');
+
+        if (isCount) {
+          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+          if (req.method === 'HEAD') return res.status(200).end();
+          return res.send(String(totalCount));
+        }
 
         // Paginierung ($top / $skip)
         const skip = parseInt(req.query.$skip, 10) || 0;
@@ -483,6 +525,10 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
           pagedItems = pagedItems.slice(0, top);
         }
 
+        const sRoot = rawPath.includes(';v=2') || origUrl.includes(';v=2')
+          ? "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/"
+          : "/sap/opu/odata/IWFND/CATALOGSERVICE/";
+
         // Format-Erkennung (Standard für SAP Gateway ist XML Atom-Feed, es sei denn JSON wird explizit verlangt)
         const isJson = req.query.$format === 'json' || 
                        (req.headers.accept && req.headers.accept.includes('application/json') && !req.headers.accept.includes('xml'));
@@ -491,7 +537,7 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
           res.setHeader('Content-Type', 'application/atom+xml; type=feed; charset=utf-8');
           if (req.method === 'HEAD') return res.status(200).end();
           const collName = isRecommended ? "RecommendedServiceCollection" : "ServiceCollection";
-          return res.send(renderServiceCollectionXML(pagedItems, baseUrl, collName, totalCount));
+          return res.send(renderServiceCollectionXML(pagedItems, baseUrl, collName, totalCount, sRoot));
         }
 
         // JSON Response
@@ -500,8 +546,8 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
 
         const results = pagedItems.map(s => ({
           __metadata: {
-            id: `${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection('${s.ID}')`,
-            uri: `${baseUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection('${s.ID}')`,
+            id: `${baseUrl}${sRoot}${isRecommended ? 'RecommendedServiceCollection' : 'ServiceCollection'}('${s.ID}')`,
+            uri: `${baseUrl}${sRoot}${isRecommended ? 'RecommendedServiceCollection' : 'ServiceCollection'}('${s.ID}')`,
             type: "CATALOGSERVICE.Service"
           },
           ...s
@@ -523,13 +569,17 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
 
       // 5. Catalog Service Root (Service Document)
       handleCatalogRequest(req, res, 'CatalogRoot');
+      const sRoot = rawPath.includes(';v=2') || origUrl.includes(';v=2')
+        ? "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/"
+        : "/sap/opu/odata/IWFND/CATALOGSERVICE/";
+
       const isJson = req.query.$format === 'json' || 
                      (req.headers.accept && req.headers.accept.includes('application/json') && !req.headers.accept.includes('xml'));
 
       if (!isJson) {
         res.setHeader('Content-Type', 'application/atomsvc+xml; charset=utf-8');
         if (req.method === 'HEAD') return res.status(200).end();
-        return res.send(renderServiceDocumentXML(getBaseUrl(req)));
+        return res.send(renderServiceDocumentXML(getBaseUrl(req), sRoot));
       }
 
       res.setHeader('Content-Type', 'application/json; charset=utf-8');

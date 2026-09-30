@@ -113,6 +113,28 @@ function getBaseUrl(req) {
   return `${protocol}://${host}`;
 }
 
+// Globales Incoming-Request Logging für BTP APIM Live-Audit & Troubleshooting
+app.use((req, res, next) => {
+  const p = req.path || '';
+  if (req.method !== 'OPTIONS' && !p.startsWith('/api/audit') && !p.endsWith('.ico') && !p.endsWith('.css') && !p.endsWith('.js') && !p.endsWith('.png')) {
+    recordAuditLog({
+      method: req.method,
+      endpoint: req.originalUrl || req.url,
+      client: req.ip || req.headers['x-forwarded-for'] || 'unknown',
+      userAgent: req.headers['user-agent'] || 'unknown',
+      status: 'RECEIVED',
+      authMethod: req.headers['authorization'] ? 'Auth-Header-Present' : 'None',
+      headers: {
+        accept: req.headers['accept'],
+        'content-type': req.headers['content-type'],
+        host: req.headers['host'],
+        dataserviceversion: req.headers['dataserviceversion'] || req.headers['maxdataserviceversion']
+      }
+    });
+  }
+  next();
+});
+
 // Hook OData $metadata middleware
 setupOData(app, getBaseUrl, meterDatabase);
 // Hook SAP S/4HANA Business Partner OData v2 Mock Service (Public / No Auth)

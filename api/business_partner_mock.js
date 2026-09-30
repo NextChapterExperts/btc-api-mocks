@@ -764,6 +764,23 @@ module.exports = function setupBusinessPartnerMock(app, getBaseUrl, recordAuditL
     res.json(wrapResult(filtered, 'A_BusinessPartner', req));
   });
 
+  // 3.3b A_BusinessPartner/$count
+  app.get([`${BASE_PATH}/A_BusinessPartner/\\$count`, `${BASE_PATH}/A_BusinessPartner/%24count`], (req, res) => {
+    handleODataRequest(req, res, 'A_BusinessPartner/$count');
+    const filtered = applyQuery(businessPartners, req);
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    if (req.method === 'HEAD') return res.status(200).end();
+    res.send(String(filtered.length));
+  });
+
+  // 3.3c A_BusinessPartnerAddress/$count
+  app.get([`${BASE_PATH}/A_BusinessPartnerAddress/\\$count`, `${BASE_PATH}/A_BusinessPartnerAddress/%24count`], (req, res) => {
+    handleODataRequest(req, res, 'A_BusinessPartnerAddress/$count');
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    if (req.method === 'HEAD') return res.status(200).end();
+    res.send(String(addresses.length));
+  });
+
   // 3.4 A_BusinessPartner Single Entity: z.B. /A_BusinessPartner('1000010')
   app.get(`${BASE_PATH}/A_BusinessPartner\\(:key\\)`, (req, res) => {
     handleODataRequest(req, res, 'A_BusinessPartner(Key)');
