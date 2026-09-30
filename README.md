@@ -90,13 +90,16 @@ Damit Sie im **SAP BTP API Management** einen klassischen **API Provider** anleg
 * **Provider Typ:** `SAP Gateway` oder `Internet`
 * **Host:** `<deine-app>.vercel.app` (ohne https://)
 * **Port:** `443`
-* **Path Prefix:** `/sap/opu/odata` *(kann auch leer gelassen werden)*
-* **Service Collection URL:** `/IWFND/CATALOGSERVICE;v=2/ServiceCollection`
+* **Path Prefix:** `/sap/opu/odata` *(funktioniert auch mit `/sap/opu/odata/sap/` oder komplett leer)*
+* **Service Collection URL:** `/IWFND/CATALOGSERVICE;v=2/ServiceCollection` *(akzeptiert auch `/ServiceCollection`, `/RecommendedServiceCollection` oder `/IWFND/CATALOGSERVICE/ServiceCollection`)*
 * **Authentication:** `None`
 
-### Verfügbare Endpunkte
-* **ServiceCollection (JSON):** `GET /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection?$format=json`
-* **ServiceCollection (Atom XML):** `GET /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection` (mit Header `Accept: application/atom+xml`)
-* **Katalog-Metadaten:** `GET /sap/opu/odata/IWFND/CATALOGSERVICE;v=2/$metadata`
+### Automatische Kompatibilitätsfeatures
+* **SAPUI5 Table Binding:** Unterstützt `$inlinecount=allpages` mit `__count` und `<m:count>` (verhindert leere Auswahllisten im APIM-Dialog).
+* **Universelle Pfad-Toleranz:** Reagiert auf `/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/...`, `/sap/opu/odata/ServiceCollection`, `/sap/opu/odata/sap/`, `/RecommendedServiceCollection` etc.
+* **Service-Aliase:** Bietet sowohl `API_BUSINESS_PARTNER` als auch `API_BUSINESS_PARTNER_SRV` an.
+* **Ressourcen-Discovery:** Beantwortet `ServiceCollection('API_BUSINESS_PARTNER_0001')/EntitySets` automatisch für die automatische Proxy-Ressourcengenerierung im APIM.
+* **Dual-Format:** Unterstützt OData JSON und Atom XML Feed.
+
 
 

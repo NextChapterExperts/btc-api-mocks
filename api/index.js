@@ -1812,6 +1812,7 @@ IntegrationCell.Include = true</code></pre>
                   <button class="btn-sm-action" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/sap/API_BUSINESS_PARTNER/$metadata')">BP $metadata XML</button>
                   <button class="btn-sm-action" style="background:#0369A1; color:#fff;" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection?$format=json')">🏛️ Gateway ServiceCollection (JSON)</button>
                   <button class="btn-sm-action" style="background:#0284C7; color:#fff;" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/$metadata')">🏛️ Gateway Catalog $metadata</button>
+                  <button class="btn-sm-action" style="background:#0F766E; color:#fff;" onclick="testCustomUrl('${hostUrl}/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/ServiceCollection(\\'API_BUSINESS_PARTNER_0001\\')/EntitySets?$format=json')">🏛️ BP EntitySets Navigation</button>
                 </div>
               </div>
 
