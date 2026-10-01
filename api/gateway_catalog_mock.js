@@ -309,23 +309,29 @@ module.exports = function setupGatewayCatalogMock(app, getBaseUrl, recordAuditLo
   // =============================================================
   app.use((req, res, next) => {
     // Normalisiere doppelte Pfadsegmente, die durch APIM-Konkatenation (PathPrefix + ServiceCollectionUrl) entstehen können
-    if (req.url && req.url.includes('/sap/opu/odata/sap/opu/odata/')) {
-      req.url = req.url.replace(/\/sap\/opu\/odata\/sap\/opu\/odata\//gi, '/sap/opu/odata/');
+    if (req.url && req.url.includes('/sap/opu/odata/sap/opu/odata')) {
+      req.url = req.url.replace(/(\/sap\/opu\/odata)+/gi, '/sap/opu/odata');
+    }
+    if (req.originalUrl && req.originalUrl.includes('/sap/opu/odata/sap/opu/odata')) {
+      req.originalUrl = req.originalUrl.replace(/(\/sap\/opu\/odata)+/gi, '/sap/opu/odata');
     }
 
     const rawPath = (req.path || req.url || '').toLowerCase();
     const origUrl = (req.originalUrl || '').toLowerCase();
     
-    // Prüfen, ob eine Catalog- oder Collection-Anfrage vorliegt
-    const isCatalog = rawPath.includes('catalogservice') || origUrl.includes('catalogservice');
+    // Prüfen, ob eine Catalog-, IWFND- oder Collection-Anfrage vorliegt
+    const isCatalog = rawPath.includes('catalogservice') || origUrl.includes('catalogservice') ||
+                      rawPath.includes('iwfnd') || origUrl.includes('iwfnd');
     const isServiceCollection = rawPath.includes('servicecollection') || origUrl.includes('servicecollection');
     const isRecommended = rawPath.includes('recommendedservicecollection') || origUrl.includes('recommendedservicecollection');
     
-    // Prüfen auf SAP OData Root Abfragen (z.B. /sap/opu/odata, /sap/opu/odata/, /sap/opu/odata/sap/)
+    // Prüfen auf SAP OData Root Abfragen (z.B. /sap/opu/odata, /sap/opu/odata/, /sap/opu/odata/sap/, /sap/opu/odata/iwfnd)
     const isODataRoot = (rawPath === '/sap/opu/odata' || rawPath === '/sap/opu/odata/' ||
                          rawPath === '/sap/opu/odata/sap' || rawPath === '/sap/opu/odata/sap/' ||
+                         rawPath === '/sap/opu/odata/iwfnd' || rawPath === '/sap/opu/odata/iwfnd/' ||
                          origUrl === '/sap/opu/odata' || origUrl === '/sap/opu/odata/' ||
-                         origUrl === '/sap/opu/odata/sap' || origUrl === '/sap/opu/odata/sap/');
+                         origUrl === '/sap/opu/odata/sap' || origUrl === '/sap/opu/odata/sap/' ||
+                         origUrl === '/sap/opu/odata/iwfnd' || origUrl === '/sap/opu/odata/iwfnd/');
 
     if (isCatalog || isServiceCollection || isRecommended || isODataRoot) {
       

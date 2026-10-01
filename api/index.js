@@ -113,6 +113,34 @@ function getBaseUrl(req) {
   return `${protocol}://${host}`;
 }
 
+// Global URL Normalizer & SAP Gateway Alias Resolver
+app.use((req, res, next) => {
+  // 1. Collapse mehrfache /sap/opu/odata Segmente, die durch APIM PathPrefix + TargetURL entstehen
+  if (req.url && req.url.includes('/sap/opu/odata/sap/opu/odata')) {
+    req.url = req.url.replace(/(\/sap\/opu\/odata)+/gi, '/sap/opu/odata');
+  }
+  if (req.originalUrl && req.originalUrl.includes('/sap/opu/odata/sap/opu/odata')) {
+    req.originalUrl = req.originalUrl.replace(/(\/sap\/opu\/odata)+/gi, '/sap/opu/odata');
+  }
+
+  // 2. Business Partner URL Aliases (SRV-Suffix, OP_..., oder ohne /sap/ Prefix)
+  const bpAliases = [
+    '/sap/opu/odata/sap/API_BUSINESS_PARTNER_SRV',
+    '/sap/opu/odata/sap/OP_API_BUSINESS_PARTNER_SRV',
+    '/sap/opu/odata/API_BUSINESS_PARTNER',
+    '/sap/API_BUSINESS_PARTNER',
+    '/API_BUSINESS_PARTNER'
+  ];
+  for (const alias of bpAliases) {
+    if (req.url && (req.url === alias || req.url.startsWith(alias + '/') || req.url.startsWith(alias + '?'))) {
+      req.url = req.url.replace(alias, '/sap/opu/odata/sap/API_BUSINESS_PARTNER');
+      break;
+    }
+  }
+
+  next();
+});
+
 // Globales Incoming-Request Logging für BTP APIM Live-Audit & Troubleshooting
 app.use((req, res, next) => {
   const p = req.path || '';
